@@ -13,8 +13,14 @@
 // page yet (a pro who signed up in the last few minutes) still works: GitHub
 // Pages serves 404.html for it, which loads the pro's card in the browser.
 //
+// A pro who changes their handle keeps the old one for 90 days (migration
+// 040). Each old handle gets a small page that sends visitors on to the new
+// /book/<handle> and carries the same preview tags, so a link texted before
+// the change still previews as the pro.
+//
 // Reads only public data, with the same public key the app uses: pros'
-// handles (profiles.handle) and get_pro_invite_card (migration 031).
+// handles (profiles.handle), get_pro_invite_card (migration 031) and
+// get_handle_redirects (migration 040).
 
 import { Resvg } from '@resvg/resvg-js';
 import fs from 'node:fs/promises';
@@ -170,7 +176,7 @@ function defaultImage(markUri) {
 // ---------------------------------------------------------------------------
 // Per-pro page: the invite page, with this pro's preview tags in <head>.
 // ---------------------------------------------------------------------------
-function proPage(template, card) {
+function proTags(card) {
   const name = card.name || card.handle;
   const place = [card.city, card.state].filter(Boolean).join(', ');
   const top = (card.services || []).slice(0, 3).map((s) => `${s.name} ${price(s.price_cents)}`).join(' · ');
@@ -203,6 +209,11 @@ function proPage(template, card) {
 <meta name="twitter:description" content="${esc(description)}">
 <meta name="twitter:image" content="${image}">
 <meta name="apple-itunes-app" content="app-id=${APP_STORE_ID}, app-argument=${url}">`;
+  return { tags, name };
+}
+
+function proPage(template, card) {
+  const { tags } = proTags(card);
 
   // Swap the generic tags for this pro's.
   return template
@@ -212,6 +223,31 @@ function proPage(template, card) {
     .replace(/<meta name="twitter:[^"]*"[^>]*>\n?/g, '')
     .replace(/<meta name="apple-itunes-app"[^>]*>\n?/g, '')
     .replace('<meta name="theme-color"', `${tags.trim()}\n<meta name="theme-color"`);
+}
+
+// Page at a pro's OLD handle: straight on to their current page (meta refresh,
+// plus a script for browsers that ignore it), with the same preview tags —
+// iMessage and the social apps read those without following the redirect,
+// and rel=canonical / og:url point them at the new address.
+function redirectPage(card) {
+  const { tags, name } = proTags(card);
+  const target = `/book/${card.handle}`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+${tags.trim()}
+<meta http-equiv="refresh" content="0; url=${target}">
+<meta name="theme-color" content="#1A1F36">
+<link rel="icon" href="/img/mark.png">
+<script>location.replace(${JSON.stringify(target)} + location.search + location.hash);</script>
+</head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;text-align:center;padding:48px 20px">
+<p><a href="${target}">Continue to ${esc(name)} on BookNStyle</a></p>
+</body>
+</html>
+`;
 }
 
 // ---------------------------------------------------------------------------
@@ -229,6 +265,7 @@ async function main() {
   await fs.writeFile(path.join(OUT, 'og', 'default.png'), defaultImage(markUri));
 
   let made = 0;
+  const cards = new Map();
   for (const { handle } of pros) {
     if (!HANDLE.test(handle ?? '')) continue;
     let card;
@@ -242,9 +279,35 @@ async function main() {
     card.handle = card.handle || handle;
     await fs.writeFile(path.join(OUT, 'book', `${handle}.html`), proPage(template, card));
     await fs.writeFile(path.join(OUT, 'og', `${handle}.png`), await previewImage(card, markUri));
+    cards.set(handle, card);
     made++;
   }
   console.log(`Built ${made} pro page(s) into _site/`);
+
+  // Old handles still reserved (040). If the database doesn't have the
+  // function yet, build the rest of the site anyway: old links then land on
+  // 404.html, which still finds the pro.
+  let redirects = [];
+  try {
+    redirects = await api('/rest/v1/rpc/get_handle_redirects', {});
+  } catch (e) {
+    console.warn(`skip old-handle pages: ${e.message}`);
+  }
+
+  let moved = 0;
+  for (const { old_handle: oldHandle, current_handle: handle } of redirects ?? []) {
+    if (!HANDLE.test(oldHandle ?? '') || !HANDLE.test(handle ?? '')) continue;
+    // A live pro page always wins (shouldn't happen: 040 keeps the name
+    // reserved, but never overwrite a real page).
+    if (cards.has(oldHandle)) continue;
+    // The pro's own page wasn't built (it failed above): no preview image to
+    // point at, and 404.html handles the old link just as well.
+    const card = cards.get(handle);
+    if (!card) continue;
+    await fs.writeFile(path.join(OUT, 'book', `${oldHandle}.html`), redirectPage(card));
+    moved++;
+  }
+  console.log(`Built ${moved} old-handle redirect page(s)`);
 }
 
 main().catch((e) => {

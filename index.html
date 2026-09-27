@@ -29,7 +29,8 @@
 
   The key below is Supabase's PUBLIC publishable key — the same one inside
   the app. It can only call what the anon role may call; here that's the
-  get_pro_invite_card function (migration 031).
+  get_pro_invite_card function (migration 031, which also accepts a pro's
+  old handle for 90 days after they change it — migration 040).
 -->
 <style>
   :root {
@@ -225,6 +226,13 @@
   function showPro(card, handle) {
     var name = card.name || handle;
     document.title = 'Book with ' + name + ' on BookNStyle';
+
+    // An old link: the pro changed their handle, and the old one keeps
+    // working for 90 days (migration 040). Show the current link in the
+    // address bar, so a link copied from here is the new one.
+    if (card.handle && card.handle !== handle && HANDLE_PATTERN.test(card.handle) && history.replaceState) {
+      try { history.replaceState(null, '', '/book/' + card.handle); } catch (e) { /* keep the old address */ }
+    }
 
     var slot = $('avatar-slot');
     if (card.avatar_url && /^https:\/\//i.test(card.avatar_url)) {
