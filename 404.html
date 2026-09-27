@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Book with your pro on BookNStyle</title>
+<meta name="description" content="Book your next appointment on BookNStyle. Reminders before every visit, and your first reschedule is free.">
+<meta property="og:title" content="Book with your pro on BookNStyle">
+<meta property="og:description" content="Reminders before every visit, and your first reschedule is free.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BookNStyle">
+<meta property="og:image" content="https://app.booknstyle.com/og/default.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://app.booknstyle.com/og/default.png">
+<meta name="apple-itunes-app" content="app-id=6813224710">
+<meta name="theme-color" content="#1A1F36">
+<link rel="icon" href="/img/mark.png">
+<!--
+  Invite page for https://app.booknstyle.com/book/<handle>.
+
+  GitHub Pages serves 404.html for any path it doesn't have, so every
+  /book/<handle> link lands on 404.html — an exact copy of this file. Edit
+  this file, then copy it over 404.html so the two stay identical.
+
+  With the app installed, iOS Universal Links / Android App Links open the
+  link in the app instead and this page is never shown (see .well-known/).
+
+  The key below is Supabase's PUBLIC publishable key — the same one inside
+  the app. It can only call what the anon role may call; here that's the
+  get_pro_invite_card function (migration 031).
+-->
+<style>
+  :root {
+    --bg: #FAFAF7; --surface: #FFFFFF; --muted-bg: #F4F1EA;
+    --ink: #1A1F36; --ink-soft: #3D4258; --muted: #6B6B7B; --muted-light: #A8A8B3;
+    --accent: #C8956A; --accent-dark: #A57A55; --accent-soft: #F1E5D6;
+    --border: #EFEAE0; --hero: #1A1F36; --on-hero: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0E1018; --surface: #181B26; --muted-bg: #222530;
+      --ink: #F5F4EE; --ink-soft: #C7C6BD; --muted: #8E8F95; --muted-light: #5C5D66;
+      --accent-soft: #3A2E22; --border: #262936; --hero: #0A0B11; --on-hero: #F5F4EE;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .hero {
+    background: var(--hero); color: var(--on-hero);
+    padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 88px;
+    text-align: center;
+  }
+  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+  .brand img { width: 28px; height: auto; }
+  .brand span { font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+  main { max-width: 480px; margin: -64px auto 0; padding: 0 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    padding: 28px 22px; box-shadow: 0 10px 30px rgba(26, 31, 54, 0.08);
+  }
+  .center { text-align: center; }
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 14px;
+  }
+  .avatar {
+    width: 104px; height: 104px; border-radius: 50%; margin: 0 auto 16px; display: block;
+    object-fit: cover; border: 3px solid var(--accent); background: var(--muted-bg);
+  }
+  .initials {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px; font-weight: 700; color: var(--ink);
+  }
+  h1 { font-size: 26px; line-height: 1.2; letter-spacing: -0.3px; margin: 0; }
+  .sub { color: var(--muted); margin: 6px 0 0; font-size: 15px; }
+  .services { list-style: none; margin: 24px 0 0; padding: 0; border-top: 1px solid var(--border); }
+  .services li {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+  }
+  .svc-name { font-weight: 600; }
+  .svc-dur { display: block; color: var(--muted); font-size: 13px; font-weight: 400; }
+  .svc-price { font-weight: 700; white-space: nowrap; }
+  .steps { margin: 24px 0 0; padding: 18px; border-radius: 14px; background: var(--accent-soft); }
+  .steps p { margin: 0; font-size: 15px; color: var(--ink); }
+  .handle {
+    display: inline-block; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1px 8px;
+  }
+  .copy {
+    margin-top: 12px; appearance: none; border: 1px solid var(--accent); background: transparent;
+    color: var(--accent-dark); font: inherit; font-size: 14px; font-weight: 600;
+    border-radius: 999px; padding: 7px 16px; cursor: pointer;
+  }
+  @media (prefers-color-scheme: dark) { .copy { color: var(--accent); } }
+  .stores { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 24px; }
+  .stores a { display: block; line-height: 0; }
+  .stores .apple img { height: 52px; width: auto; }
+  /* Google's badge carries its own padding, so it's drawn larger to match. */
+  .stores .google img { height: 77px; width: auto; margin: -12px 0; }
+  .perks { color: var(--muted); font-size: 14px; margin: 20px 0 0; text-align: center; }
+  .loading { display: flex; justify-content: center; padding: 36px 0; }
+  .spinner {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 3px solid var(--border); border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  footer { text-align: center; color: var(--muted-light); font-size: 12px; margin-top: 24px; }
+  footer a { color: inherit; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+  <header class="hero">
+    <a class="brand" href="/">
+      <img src="/img/mark.png" alt="">
+      <span>BookNStyle</span>
+    </a>
+  </header>
+
+  <main>
+    <section class="card" id="card" aria-live="polite">
+      <div class="loading" id="loading"><div class="spinner" aria-label="Loading"></div></div>
+
+      <!-- A pro's invite -->
+      <div id="pro" hidden>
+        <div class="center">
+          <p class="eyebrow">You're invited</p>
+          <div id="avatar-slot"></div>
+          <h1 id="pro-name"></h1>
+          <p class="sub" id="pro-business" hidden></p>
+          <p class="sub" id="pro-location" hidden></p>
+        </div>
+        <ul class="services" id="services" hidden></ul>
+        <div class="steps center">
+          <p id="handle-line"></p>
+          <button class="copy" id="copy" type="button">Copy handle</button>
+        </div>
+      </div>
+
+      <!-- No handle, or one we don't know -->
+      <div id="generic" class="center" hidden>
+        <p class="eyebrow" id="generic-eyebrow">BookNStyle</p>
+        <h1 id="generic-title">Book beauty pros near you</h1>
+        <p class="sub" id="generic-sub">Hair, nails, barbers, lashes and more. Book in a few taps.</p>
+      </div>
+
+      <div class="stores" id="stores" hidden>
+        <a class="apple" id="apple" href="https://apps.apple.com/app/id6813224710" rel="noopener">
+          <img src="/img/app-store.png" alt="Download on the App Store">
+        </a>
+        <a class="google" id="google" href="https://play.google.com/store/apps/details?id=com.booknstyle.app" rel="noopener">
+          <img src="/img/google-play.png" alt="Get it on Google Play">
+        </a>
+      </div>
+      <p class="perks" id="perks" hidden>Reminders before every appointment. Your first reschedule is free.</p>
+    </section>
+
+    <footer>
+      <a href="https://legal.booknstyle.com/terms/">Terms</a> ·
+      <a href="https://legal.booknstyle.com/privacy/">Privacy</a> ·
+      © BookNStyle LLC
+    </footer>
+  </main>
+
+<script>
+(function () {
+  'use strict';
+
+  var SUPABASE_URL = 'https://ebrxekhmlxlccuvcwiwb.supabase.co';
+  var SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_Vc4MPxSdXx1FmL3562bLUQ_A_KwQeVe';
+  // Same rule as the app and the database.
+  var HANDLE_PATTERN = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
+
+  function $(id) { return document.getElementById(id); }
+  function show(id) { $(id).hidden = false; }
+  function hide(id) { $(id).hidden = true; }
+
+  // Put the store for this phone first.
+  var ua = navigator.userAgent || '';
+  if (/android/i.test(ua)) {
+    $('stores').insertBefore($('google'), $('apple'));
+  }
+
+  function price(cents) {
+    var dollars = cents / 100;
+    return '$' + (cents % 100 === 0 ? dollars.toFixed(0) : dollars.toFixed(2));
+  }
+
+  function duration(mins) {
+    if (!mins) return '';
+    var h = Math.floor(mins / 60), m = mins % 60;
+    if (!h) return m + ' min';
+    return h + ' hr' + (m ? ' ' + m + ' min' : '');
+  }
+
+  function initials(name) {
+    return name.split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase() || 'B';
+  }
+
+  function finish() {
+    hide('loading');
+    show('stores');
+    show('perks');
+  }
+
+  function showGeneric(notFound) {
+    if (notFound) {
+      $('generic-eyebrow').textContent = 'Link not found';
+      $('generic-title').textContent = "We couldn't find that pro";
+      $('generic-sub').textContent = 'Check the link with your pro, or get the app and search for them.';
+    }
+    show('generic');
+    finish();
+  }
+
+  function showPro(card, handle) {
+    var name = card.name || handle;
+    document.title = 'Book with ' + name + ' on BookNStyle';
+
+    var slot = $('avatar-slot');
+    if (card.avatar_url && /^https:\/\//i.test(card.avatar_url)) {
+      var img = document.createElement('img');
+      img.className = 'avatar';
+      img.alt = '';
+      img.src = card.avatar_url;
+      img.onerror = function () { slot.replaceChild(initialsBadge(name), img); };
+      slot.appendChild(img);
+    } else {
+      slot.appendChild(initialsBadge(name));
+    }
+
+    $('pro-name').textContent = name;
+    if (card.business_name && card.business_name !== name) {
+      $('pro-business').textContent = card.business_name;
+      show('pro-business');
+    }
+    var place = [card.city, card.state].filter(Boolean).join(', ');
+    if (place) {
+      $('pro-location').textContent = place;
+      show('pro-location');
+    }
+
+    var list = $('services');
+    (card.services || []).forEach(function (s) {
+      var li = document.createElement('li');
+      var left = document.createElement('span');
+      left.className = 'svc-name';
+      left.textContent = s.name;
+      var dur = duration(s.duration_minutes);
+      if (dur) {
+        var d = document.createElement('span');
+        d.className = 'svc-dur';
+        d.textContent = dur;
+        left.appendChild(d);
+      }
+      var right = document.createElement('span');
+      right.className = 'svc-price';
+      right.textContent = price(s.price_cents);
+      li.appendChild(left);
+      li.appendChild(right);
+      list.appendChild(li);
+    });
+    if (list.children.length) show('services');
+
+    // "When you sign up, enter handle <handle> so we connect you with <name>"
+    var line = $('handle-line');
+    line.appendChild(document.createTextNode('When you sign up, enter handle '));
+    var h = document.createElement('span');
+    h.className = 'handle';
+    h.textContent = card.handle || handle;
+    line.appendChild(h);
+    line.appendChild(document.createTextNode(' so we connect you with ' + name + '.'));
+
+    var copy = $('copy');
+    if (navigator.clipboard && window.isSecureContext) {
+      copy.onclick = function () {
+        navigator.clipboard.writeText(card.handle || handle).then(function () {
+          copy.textContent = 'Copied';
+          setTimeout(function () { copy.textContent = 'Copy handle'; }, 2000);
+        });
+      };
+    } else {
+      copy.hidden = true;
+    }
+
+    show('pro');
+    finish();
+  }
+
+  function initialsBadge(name) {
+    var div = document.createElement('div');
+    div.className = 'avatar initials';
+    div.textContent = initials(name);
+    return div;
+  }
+
+  var match = location.pathname.match(/^\/book\/([^/]+)\/?$/i);
+  var handle = null;
+  if (match) {
+    try { handle = decodeURIComponent(match[1]).replace(/^@/, '').toLowerCase(); } catch (e) { handle = null; }
+  }
+
+  if (!match) { showGeneric(false); return; }
+  if (!handle || !HANDLE_PATTERN.test(handle)) { showGeneric(true); return; }
+
+  fetch(SUPABASE_URL + '/rest/v1/rpc/get_pro_invite_card', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_handle: handle })
+  })
+    .then(function (res) { return res.ok ? res.json() : null; })
+    .then(function (card) {
+      if (card && card.id) showPro(card, handle);
+      else showGeneric(true);
+    })
+    .catch(function () {
+      // Offline or the server is down: still let them get the app.
+      showGeneric(false);
+    });
+})();
+</script>
+</body>
+</html>

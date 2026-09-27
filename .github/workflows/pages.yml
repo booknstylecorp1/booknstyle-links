@@ -1,0 +1,60 @@
+# Rebuilds app.booknstyle.com from the BookNStyle database and publishes it.
+# Every 15 minutes, so a new pro (or a changed photo, name or service) gets a
+# rich link preview soon after; also on every push and on demand.
+name: Build and publish invite pages
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  push:
+    branches: [main]
+  workflow_dispatch:
+  repository_dispatch:
+    types: [pros-changed]
+
+permissions:
+  contents: write     # the monthly keep-alive commit (see below)
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: node scripts/generate.mjs
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      # GitHub pauses scheduled workflows in a public repository after 60
+      # days without a commit. An empty commit once a month keeps the
+      # 15-minute rebuild running.
+      - name: Keep the schedule alive
+        if: github.event_name == 'schedule'
+        run: |
+          last=$(git log -1 --format=%ct)
+          if [ $(( $(date +%s) - last )) -gt $(( 30 * 24 * 3600 )) ]; then
+            git config user.name "booknstyle-bot"
+            git config user.email "bot@users.noreply.github.com"
+            git commit --allow-empty -m "Keep the invite-page schedule running"
+            git push
+          fi
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

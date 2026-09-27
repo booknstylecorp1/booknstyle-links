@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "M364RT3G4J.com.booknstyle.app",
+        "paths": ["/book/*"],
+        "appIDs": ["M364RT3G4J.com.booknstyle.app"],
+        "components": [
+          { "/": "/book/*", "comment": "Pro invite links open the pro's booking page in the app" }
+        ]
+      }
+    ]
+  }
+}

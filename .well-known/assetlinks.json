@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.booknstyle.app",
+      "sha256_cert_fingerprints": [
+        "25:1E:6B:1B:7E:77:D0:B7:CC:02:5A:D1:8C:27:05:16:A7:00:87:65:40:2F:B8:8F:67:EE:14:FE:93:E7:6E:9C",
+        "94:0D:A2:10:7C:FD:81:BC:ED:31:68:D3:9A:14:6C:73:7C:00:6B:C6:C4:57:06:AC:2B:0A:BF:5B:F3:58:4F:D7"
+      ]
+    }
+  }
+]

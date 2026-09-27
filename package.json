@@ -1,0 +1,8 @@
+{
+  "name": "booknstyle-links",
+  "private": true,
+  "type": "module",
+  "description": "Pro invite pages for app.booknstyle.com, rebuilt from the BookNStyle database by a GitHub Action.",
+  "scripts": { "generate": "node scripts/generate.mjs" },
+  "dependencies": { "@resvg/resvg-js": "2.6.2" }
+}
