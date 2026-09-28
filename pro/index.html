@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BookNStyle Pro · Billing</title>
+<meta name="description" content="Start or manage your BookNStyle Pro plan.">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<!--
+  Only this origin, the pinned supabase-js file on jsDelivr (checked by its
+  hash below), and BookNStyle's Supabase project. No inline scripts, no
+  trackers, no other hosts.
+-->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://ebrxekhmlxlccuvcwiwb.supabase.co; form-action 'self'; base-uri 'none'">
+<meta name="theme-color" content="#16182B">
+<link rel="icon" href="/img/mark.png">
+<!--
+  BookNStyle Pro billing page: https://app.booknstyle.com/pro/
+
+  WHY this page exists: Google Play doesn't let the Android app sell the Pro
+  plan, so pros pay here and the app just unlocks what they paid for. The
+  iPhone app may open Stripe Checkout in Safari (Apple 3.1.1(a), US) and
+  Stripe then lands back here with ?checkout=success&from=app.
+
+  Nothing in the app, and no other page on this site, links here (the
+  Android app opens this site's /book/ pages). Pros reach it from the
+  welcome email, or by typing the address.
+
+  Sign-in: email + password, or a code emailed by Supabase (for pros who
+  use Apple / Google / Facebook). The key in app.js is Supabase's PUBLIC
+  publishable key (the same one inside the app). What a signed-in pro can
+  do is limited by the database: get_my_pro_plan (migration 044) reads only
+  their own plan, and stripe-create-subscription-checkout only ever works
+  on the caller's own account.
+
+  Supabase Auth settings this page needs are listed in README.md here.
+-->
+<style>
+  :root {
+    --bg: #FAFAF7; --surface: #FFFFFF; --muted-bg: #F4F1EA;
+    --ink: #16182B; --ink-soft: #3D4258; --muted: #6B6B7B;
+    --accent: #C8956A; --accent-text: #8A5F3C; --accent-soft: #F1E5D6;
+    --border: #EFEAE0; --border-strong: #DDD6C5;
+    --hero: #16182B; --on-hero: #FFFFFF;
+    --button: #16182B; --on-button: #FFFFFF;
+    --danger: #B3261E; --danger-soft: #FBEAE8; --ok-soft: #EAF3EC; --ok: #2F6B45;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0E1018; --surface: #181B26; --muted-bg: #222530;
+      --ink: #F5F4EE; --ink-soft: #C7C6BD; --muted: #8E8F95;
+      --accent-text: #C8956A; --accent-soft: #3A2E22;
+      --border: #262936; --border-strong: #353949;
+      --hero: #0A0B11; --on-hero: #F5F4EE;
+      --button: #C8956A; --on-button: #13141B;
+      --danger: #E5867A; --danger-soft: #3A2220; --ok-soft: #1E3326; --ok: #9BC4A8;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .hero {
+    background: var(--hero); color: var(--on-hero);
+    padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 88px;
+    text-align: center;
+  }
+  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+  .brand img { width: 28px; height: auto; }
+  .brand span { font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+  main { max-width: 520px; margin: -64px auto 0; padding: 0 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    padding: 28px 22px; box-shadow: 0 10px 30px rgba(22, 24, 43, 0.08);
+  }
+  .center { text-align: center; }
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
+    color: var(--accent-text); margin: 0 0 10px;
+  }
+  h1 { font-size: 26px; line-height: 1.2; letter-spacing: -0.3px; margin: 0; }
+  h1:focus { outline: none; }
+  h2 { font-size: 18px; margin: 0 0 6px; }
+  p { margin: 0; }
+  .sub { color: var(--muted); margin: 8px 0 0; font-size: 15px; }
+  .stack > * + * { margin-top: 14px; }
+  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  input[type="email"], input[type="password"], input[type="text"] {
+    width: 100%; font: inherit; font-size: 16px; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--border-strong); border-radius: 12px; padding: 12px 14px;
+  }
+  input:focus-visible, button:focus-visible, a:focus-visible, .plan:focus-within {
+    outline: 3px solid var(--accent); outline-offset: 2px;
+  }
+  .code-input { letter-spacing: 6px; font-size: 22px !important; text-align: center; font-variant-numeric: tabular-nums; }
+  .btn {
+    display: block; width: 100%; appearance: none; border: 0; cursor: pointer; text-align: center;
+    font: inherit; font-size: 16px; font-weight: 700; text-decoration: none;
+    background: var(--button); color: var(--on-button); border-radius: 12px; padding: 14px 18px;
+  }
+  .btn[disabled] { opacity: 0.6; cursor: default; }
+  .btn-secondary {
+    background: transparent; color: var(--ink); border: 1px solid var(--border-strong); font-weight: 600;
+  }
+  .link {
+    appearance: none; background: none; border: 0; padding: 4px 0; cursor: pointer;
+    font: inherit; font-size: 15px; font-weight: 600; color: var(--accent-text); text-decoration: underline;
+  }
+  .hint { font-size: 13px; color: var(--muted); }
+  .divider { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; margin: 20px 0; }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+  .notice { border-radius: 12px; padding: 12px 14px; font-size: 15px; }
+  .notice.error { background: var(--danger-soft); color: var(--danger); }
+  .notice.ok { background: var(--ok-soft); color: var(--ok); }
+  .notice.info { background: var(--muted-bg); color: var(--ink-soft); }
+  fieldset { border: 0; margin: 0; padding: 0; }
+  legend { font-size: 14px; font-weight: 600; margin-bottom: 8px; padding: 0; }
+  .plans { display: grid; gap: 12px; }
+  .plan {
+    display: block; position: relative; cursor: pointer; font-weight: 400; margin: 0;
+    border: 2px solid var(--border); border-radius: 16px; padding: 16px; background: var(--surface);
+  }
+  .plan input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .plan.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .plan-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .plan-name { font-size: 17px; font-weight: 700; }
+  .pill {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.3px; border-radius: 999px; padding: 3px 10px;
+    background: var(--accent); color: #13141B;
+  }
+  .price { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; margin-top: 6px; }
+  .price small { font-size: 15px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
+  .plan-note { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .fine { font-size: 13px; color: var(--muted); text-align: center; }
+  .status-badge {
+    display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.3px; border-radius: 999px;
+    padding: 4px 12px; background: var(--ink); color: var(--surface);
+  }
+  .status-badge.warn { background: var(--danger); color: #FFFFFF; }
+  .rows { border-top: 1px solid var(--border); margin-top: 16px; }
+  .rows div { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
+  .rows dt { color: var(--muted); }
+  .rows dd { margin: 0; font-weight: 600; text-align: right; }
+  .benefits { list-style: none; margin: 0; padding: 0; font-size: 14px; color: var(--ink-soft); }
+  .benefits li { padding: 4px 0 4px 24px; position: relative; }
+  .benefits li::before { content: "✓"; position: absolute; left: 0; color: var(--accent-text); font-weight: 700; }
+  .loading { display: flex; justify-content: center; padding: 36px 0; }
+  .spinner {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 3px solid var(--border); border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+  .who { font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .who span { overflow-wrap: anywhere; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 24px; }
+  footer a { color: inherit; }
+  [hidden] { display: none !important; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.3/dist/umd/supabase.js"
+        integrity="sha384-wUhGjm8yom7j8IkWM5ZzIdOO/62dez3WNulthrcTYBqGaTi9lWhKKCnVtcxT2CEI"
+        crossorigin="anonymous" defer></script>
+<script src="/pro/app.js" defer></script>
+</head>
+<body>
+  <header class="hero">
+    <a class="brand" href="/">
+      <img src="/img/mark.png" alt="">
+      <span>BookNStyle</span>
+    </a>
+  </header>
+
+  <main>
+    <section class="card" aria-labelledby="page-title">
+      <div class="loading" id="loading"><div class="spinner" role="status" aria-label="Loading"></div></div>
+
+      <!-- Back from Stripe after the iPhone app sent the pro there (from=app). -->
+      <div id="view-return" class="center stack" hidden>
+        <p class="eyebrow">BookNStyle Pro</p>
+        <h1 id="return-title" tabindex="-1"></h1>
+        <p class="sub" id="return-text"></p>
+        <a class="btn" id="open-app" href="booknstyle://subscription">Open BookNStyle</a>
+        <p class="hint">Your plan shows in the app within a minute.</p>
+      </div>
+
+      <!-- Signed out -->
+      <div id="view-signin" hidden>
+        <div class="center">
+          <p class="eyebrow">For pros</p>
+          <h1 id="signin-title" tabindex="-1">Your Pro plan</h1>
+          <p class="sub">Sign in with your BookNStyle pro account.</p>
+        </div>
+        <div class="stack" style="margin-top:22px">
+          <p class="notice" id="signin-notice" role="status" hidden></p>
+
+          <form id="password-form" class="stack" novalidate>
+            <div>
+              <label for="pw-email">Email</label>
+              <input id="pw-email" type="email" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" required>
+            </div>
+            <div>
+              <label for="pw-password">Password</label>
+              <input id="pw-password" type="password" autocomplete="current-password" required>
+            </div>
+            <button class="btn" type="submit" id="pw-submit">Sign in</button>
+          </form>
+
+          <div class="divider" aria-hidden="true">or</div>
+
+          <form id="otp-form" class="stack" novalidate>
+            <div>
+              <label for="otp-email">Email me a sign-in code</label>
+              <input id="otp-email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required>
+              <p class="hint" style="margin-top:6px">For accounts made with Apple, Google or Facebook, too. Used Apple's “Hide My Email”? Enter that @privaterelay.appleid.com address.</p>
+            </div>
+            <button class="btn btn-secondary" type="submit" id="otp-send">Email me a code</button>
+          </form>
+
+          <form id="code-form" class="stack" novalidate hidden>
+            <div>
+              <label for="otp-code">Enter the code we emailed to <span id="code-email"></span></label>
+              <input id="otp-code" class="code-input" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="10" required>
+            </div>
+            <button class="btn" type="submit" id="code-submit">Sign in</button>
+            <p class="center"><button class="link" type="button" id="code-back">Use a different email or send a new code</button></p>
+          </form>
+        </div>
+      </div>
+
+      <!-- Signed in -->
+      <div id="view-account" hidden>
+        <div class="center">
+          <p class="eyebrow">BookNStyle Pro</p>
+          <h1 id="account-title" tabindex="-1">Your Pro plan</h1>
+          <p class="sub" id="account-sub" hidden></p>
+        </div>
+        <div class="stack" style="margin-top:22px">
+          <p class="notice" id="account-notice" role="status" hidden></p>
+
+          <!-- Not a pro account -->
+          <div id="plan-notpro" class="stack" hidden>
+            <p>This page is for BookNStyle pros. You're signed in with a client account, which doesn't need a plan.</p>
+          </div>
+
+          <!-- Active or free month -->
+          <div id="plan-active" hidden>
+            <span class="status-badge" id="active-badge"></span>
+            <dl class="rows">
+              <div><dt>Plan</dt><dd id="active-plan"></dd></div>
+              <div id="active-date-row"><dt id="active-date-label"></dt><dd id="active-date"></dd></div>
+            </dl>
+            <p class="hint" style="margin-top:12px" id="active-text"></p>
+            <button class="btn" type="button" id="manage" style="margin-top:18px">Manage billing</button>
+            <p class="fine" style="margin-top:10px" id="manage-fine">Update your card, see invoices, or cancel on Stripe's secure page.</p>
+          </div>
+
+          <!-- Payment problem -->
+          <div id="plan-problem" hidden>
+            <span class="status-badge warn">Payment problem</span>
+            <p style="margin-top:12px">Your last payment didn't go through. Update your card to keep taking new bookings.</p>
+            <button class="btn" type="button" id="fix-card" style="margin-top:18px">Update card</button>
+          </div>
+
+          <!-- No plan -->
+          <form id="plan-choose" class="stack" novalidate hidden>
+            <p id="choose-pitch">No commission on your services. The $1.99 booking fee is paid by the client. A Pro plan lets clients find you in search and book you.</p>
+            <fieldset>
+              <legend>Choose a plan</legend>
+              <div class="plans">
+                <label class="plan" id="plan-annual">
+                  <input type="radio" name="plan" value="annual" checked>
+                  <span class="plan-top"><span class="plan-name">Annual</span><span class="pill">Most popular · Best value</span></span>
+                  <span class="price" style="display:block">$216<small> /year</small></span>
+                  <span class="plan-note" style="display:block">Save 10% · $24/yr. $18/mo billed once a year, vs $20/mo monthly.</span>
+                </label>
+                <label class="plan" id="plan-monthly">
+                  <input type="radio" name="plan" value="monthly">
+                  <span class="plan-top"><span class="plan-name">Monthly</span></span>
+                  <span class="price" style="display:block">$20<small> /month</small></span>
+                  <span class="plan-note" style="display:block">Billed every month on the same date. Cancel anytime.</span>
+                </label>
+              </div>
+            </fieldset>
+            <button class="btn" type="submit" id="start"></button>
+            <p class="fine" id="choose-fine"></p>
+            <ul class="benefits" aria-label="What's included">
+              <li>Unlimited services and bookings</li>
+              <li>Payouts to your bank through Stripe</li>
+              <li>Card, cash, or deposit-mode bookings</li>
+              <li>Reminders, messaging and reviews</li>
+              <li>Zero commission, only standard card processing</li>
+            </ul>
+          </form>
+
+          <div class="who">
+            <span>Signed in as <strong id="who-email"></strong></span>
+            <button class="link" type="button" id="sign-out">Sign out</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- The page couldn't start (script blocked, offline). -->
+      <div id="view-error" class="center stack" hidden>
+        <h1 tabindex="-1" id="error-title">Something went wrong</h1>
+        <p class="sub" id="error-text">Check your connection and reload the page.</p>
+      </div>
+
+      <noscript>
+        <p class="center" style="padding:24px 0">This page needs JavaScript to sign you in.</p>
+      </noscript>
+    </section>
+
+    <footer>
+      <a href="https://legal.booknstyle.com/terms/">Terms</a> ·
+      <a href="https://legal.booknstyle.com/privacy/">Privacy</a> ·
+      Payments by Stripe · © BookNStyle LLC
+    </footer>
+  </main>
+</body>
+</html>

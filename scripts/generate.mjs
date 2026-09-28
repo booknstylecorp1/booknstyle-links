@@ -26,6 +26,7 @@ import { Resvg } from '@resvg/resvg-js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { assertNoLinksToBilling } from './billing-guard.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, '_site');
@@ -308,6 +309,12 @@ async function main() {
     moved++;
   }
   console.log(`Built ${moved} old-handle redirect page(s)`);
+
+  // The Android app opens this site's pages, and Google Play doesn't let the
+  // app lead a pro to a purchase. So no page here except /pro/ itself may
+  // link to the billing page (scripts/billing-guard.mjs). Fails the build
+  // (nothing is published) if one does.
+  await assertNoLinksToBilling(OUT);
 }
 
 main().catch((e) => {
