@@ -276,7 +276,7 @@
         $('active-date-label').textContent = trialing ? 'First bill on' : 'Next bill on';
         $('active-text').textContent = 'You’re all set. Clients can find you and book you.';
       }
-      $('active-date').textContent = date || '—';
+      $('active-date').textContent = date || 'n/a';
       show('plan-active');
       return;
     }

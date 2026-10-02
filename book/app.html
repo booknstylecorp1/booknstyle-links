@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Open BookNStyle</title>
+<meta name="description" content="Open the BookNStyle app.">
+<meta name="robots" content="noindex">
+<meta name="apple-itunes-app" content="app-id=6813224710">
+<meta name="theme-color" content="#1A1F36">
+<link rel="icon" href="/img/mark.png">
+<!--
+  https://app.booknstyle.com/book/app: the "Open BookNStyle" button in our
+  emails (OPEN_APP_URL in supabase/functions/_shared/emails.ts).
+
+  With the app installed, iOS Universal Links / Android App Links open this
+  address in the app (it's under /book/, which both apps claim) and this page
+  is never shown; the app sends it to its home screen (app/+native-intent.tsx).
+  "app" is a reserved handle (is_reserved_handle, migration 031), so no pro's
+  page can ever be built here.
+
+  This page is for when the link opens in a browser instead: the app isn't
+  installed, an email app opened the link in its own browser, or the email
+  was opened on a computer. "Open BookNStyle" uses the app's own address
+  (booknstyle://), or on Android an intent: link that goes to Google Play
+  when the app isn't there. On a computer the button is hidden and the page
+  points to the stores.
+
+  Like every page on this site except /pro/, it must not link to the billing
+  page (scripts/billing-guard.mjs).
+-->
+<style>
+  :root {
+    --bg: #FAFAF7; --surface: #FFFFFF;
+    --ink: #1A1F36; --muted: #6B6B7B; --muted-light: #A8A8B3;
+    --accent: #C8956A; --border: #EFEAE0; --hero: #1A1F36; --on-hero: #FFFFFF;
+    --button: #1A1F36; --on-button: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0E1018; --surface: #181B26;
+      --ink: #F5F4EE; --muted: #8E8F95; --muted-light: #5C5D66;
+      --border: #262936; --hero: #0A0B11; --on-hero: #F5F4EE;
+      --button: #C8956A; --on-button: #13141B;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .hero {
+    background: var(--hero); color: var(--on-hero);
+    padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 88px;
+    text-align: center;
+  }
+  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+  .brand img { width: 28px; height: auto; }
+  .brand span { font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+  main { max-width: 480px; margin: -64px auto 0; padding: 0 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    padding: 28px 22px; box-shadow: 0 10px 30px rgba(26, 31, 54, 0.08); text-align: center;
+  }
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 14px;
+  }
+  h1 { font-size: 26px; line-height: 1.2; letter-spacing: -0.3px; margin: 0; }
+  .sub { color: var(--muted); margin: 6px 0 0; font-size: 15px; }
+  .open {
+    display: block; margin: 24px 0 0; padding: 14px 20px; border-radius: 12px;
+    background: var(--button); color: var(--on-button); text-decoration: none;
+    font-weight: 700; font-size: 16px;
+  }
+  .note { color: var(--muted); font-size: 14px; margin: 24px 0 0; }
+  .stores { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 12px; }
+  .stores a { display: block; line-height: 0; }
+  .stores .apple img { height: 52px; width: auto; }
+  /* Google's badge carries its own padding, so it's drawn larger to match. */
+  .stores .google img { height: 77px; width: auto; margin: -12px 0; }
+  footer { text-align: center; color: var(--muted-light); font-size: 12px; margin-top: 24px; }
+  footer a { color: inherit; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+  <header class="hero">
+    <a class="brand" href="/">
+      <img src="/img/mark.png" alt="">
+      <span>BookNStyle</span>
+    </a>
+  </header>
+
+  <main>
+    <section class="card">
+      <p class="eyebrow">BookNStyle</p>
+      <h1 id="title">Open the app</h1>
+      <p class="sub" id="sub">Your bookings, schedule and messages are in the BookNStyle app.</p>
+      <a class="open" id="open" href="booknstyle://">Open BookNStyle</a>
+
+      <p class="note" id="note">Don't have the app on this phone?</p>
+      <div class="stores" id="stores">
+        <a class="apple" id="apple" href="https://apps.apple.com/app/id6813224710" rel="noopener">
+          <img src="/img/app-store.png" alt="Download on the App Store">
+        </a>
+        <a class="google" id="google" href="https://play.google.com/store/apps/details?id=com.booknstyle.app" rel="noopener">
+          <img src="/img/google-play.png" alt="Get it on Google Play">
+        </a>
+      </div>
+    </section>
+
+    <footer>
+      <a href="https://legal.booknstyle.com/terms/">Terms</a> ·
+      <a href="https://legal.booknstyle.com/privacy/">Privacy</a> ·
+      © BookNStyle LLC
+    </footer>
+  </main>
+
+<script>
+(function () {
+  'use strict';
+  var ua = navigator.userAgent || '';
+  // iPadOS Safari says "Macintosh"; a touch screen tells it apart from a Mac.
+  var isIPad = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+  var isPhone = /iPhone|iPod|iPad|Android/i.test(ua) || isIPad;
+  if (!isPhone) {
+    // A computer can't open the phone app: say so, and show the stores.
+    document.getElementById('open').hidden = true;
+    document.getElementById('title').textContent = 'BookNStyle is a phone app';
+    document.getElementById('sub').textContent =
+      'Open this email on your phone to go straight to the app, or get it here:';
+    document.getElementById('note').hidden = true;
+    return;
+  }
+  if (/android/i.test(ua)) {
+    // Chrome opens the app from an intent: link, and goes to Google Play
+    // when it isn't installed. An empty path opens the app's home screen.
+    document.getElementById('open').href =
+      'intent://#Intent;scheme=booknstyle;package=com.booknstyle.app;end';
+    // Put the store for this phone first.
+    var stores = document.getElementById('stores');
+    stores.insertBefore(document.getElementById('google'), document.getElementById('apple'));
+  }
+})();
+</script>
+</body>
+</html>

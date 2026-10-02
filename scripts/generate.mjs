@@ -165,7 +165,7 @@ function defaultImage(markUri) {
   <rect x="0" y="0" width="1200" height="8" fill="#C8956A"/>
   <image href="${markUri}" x="540" y="130" width="120" height="120"/>
   <text x="600" y="345" text-anchor="middle" font-family="Inter" font-weight="800" font-size="84" fill="#FFFFFF">BookNStyle</text>
-  <text x="600" y="410" text-anchor="middle" font-family="Inter" font-weight="400" font-size="34" fill="#B9B8B0">Book beauty pros near you — in a few taps</text>
+  <text x="600" y="410" text-anchor="middle" font-family="Inter" font-weight="400" font-size="34" fill="#B9B8B0">Book beauty pros near you, in a few taps</text>
   <text x="600" y="520" text-anchor="middle" font-family="Inter" font-weight="600" font-size="24" letter-spacing="4" fill="#C8956A">BOOK NOW · GET STYLED · LIVE WELL</text>
 </svg>`;
   return new Resvg(svg, {
