@@ -8,6 +8,7 @@ Pro invite links for BookNStyle: `https://app.booknstyle.com/book/<handle>`.
   A pro who changes their handle keeps the old one for 90 days: the generator also writes a redirect page at each old `/book/<handle>`, with the pro's preview tags.
 - `.github/workflows/pages.yml` — runs the generator every 15 minutes and publishes the site.
 - `pro/` — the Pro billing page, `https://app.booknstyle.com/pro/` (see `pro/README.md`). No other page links to it: the Android app opens this site's `/book/` pages, and Google Play doesn't allow the Android app to lead pros to a purchase.
+- `owner/`: the confirm page for the one-click links in the owner's dispute emails, `https://app.booknstyle.com/owner/` (the owner-action edge function's `OWNER_ACTION_PAGE_URL`; see the comment at the top of `owner/index.html` and RUNBOOK B8). Published Oct 6 2026 with the owner's OK. No page links to it and it isn't in `.well-known/`, so it always opens in the browser.
 - `scripts/billing-guard.mjs` — run by the generator on the finished site: the build fails (nothing is published) if any page other than `pro/` links to `/pro/`, however the link is written. Tests: `node --test scripts/billing-guard.test.mjs` (also run by the workflow).
 
 Source of truth: `web/links/` in the BookNStyle app repository.
