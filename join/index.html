@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Join BookNStyle as a pro</title>
+<meta name="description" content="Bookings, reminders and payments in one app. No commission on your services, and you set the rules.">
+<meta name="robots" content="noindex">
+<meta property="og:title" content="You're invited to BookNStyle">
+<meta property="og:description" content="For pros: no commission on your services, instant booking alerts, and set up in 10 minutes.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BookNStyle">
+<meta property="og:image" content="https://app.booknstyle.com/og/default.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://app.booknstyle.com/og/default.png">
+<!--
+  Nothing from any other host except one read-only call to BookNStyle's
+  Supabase project. The script is inline (this page is one self-contained
+  file), and it only ever writes text (textContent), never markup.
+-->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self'; connect-src https://ebrxekhmlxlccuvcwiwb.supabase.co; form-action 'none'; base-uri 'none'">
+<meta name="theme-color" content="#1A1F36">
+<link rel="icon" href="/img/mark.png">
+<!--
+  https://app.booknstyle.com/join/ : pro-to-pro invites (migration 049).
+
+  Two ways in:
+    ?r=<handle>&share=1   the referrer, from the "Invite more pros" button in
+                          their referral emails (inviteProsUrl in
+                          supabase/functions/_shared/emails.ts). Shows their
+                          invite link with Share and Copy, and a message
+                          ready to send.
+    ?r=<handle>           a pro they invited. "<pro> invited you to
+                          BookNStyle", what pros get, the store badges, and
+                          "When you sign up as a pro, enter @<handle> in
+                          Referred by"
+                          with a Copy button. That field (set_referred_by,
+                          migration 031) is how the referral is recorded:
+                          the handle can't travel through an App Store or
+                          Google Play install.
+  Without a usable handle the page is a plain "join as a pro" page (and, in
+  share mode, says where to find the handle in the app). It also shows that
+  without JavaScript.
+
+  The handle is checked with the app's rule (lib/invites.ts HANDLE_PATTERN)
+  and then looked up with get_pro_invite_card (031; it accepts an old handle
+  for 90 days after a change, 040, and returns the current one, which the
+  page then shows). Public data only, with the same public key as
+  index.html. The page shows the handle straight away and only refines it
+  when the answer comes back, so there's no loading spinner.
+
+  Rules for this page: no prices and no competitor names (owner). Like every
+  page on this site except the billing page, it must not link to the billing
+  page (scripts/billing-guard.mjs). Not under /book/, so it always opens in
+  the browser, never in the app.
+
+  Later: Invite Your Pro (a client invites their pro) plans to use this page
+  with ?c=<code>. Until that ships, ?c is ignored.
+
+  STORE BADGES: STORE_LINKS in the script below, empty until the apps are
+  live. Empty: the badges are plain images under "Coming soon on iPhone and
+  Android". Fill both on launch day (RUNBOOK step 8), the same two URLs as
+  web/site/main.js.
+-->
+<style>
+  :root {
+    --bg: #FAFAF7; --surface: #FFFFFF; --muted-bg: #F4F1EA;
+    --ink: #1A1F36; --ink-soft: #3D4258; --muted: #6B6B7B; --muted-light: #A8A8B3;
+    --accent: #C8956A; --accent-dark: #A57A55; --accent-soft: #F1E5D6;
+    --border: #EFEAE0; --hero: #1A1F36; --on-hero: #FFFFFF;
+    --button: #1A1F36; --on-button: #FFFFFF; --bad: #B3261E;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0E1018; --surface: #181B26; --muted-bg: #222530;
+      --ink: #F5F4EE; --ink-soft: #C7C6BD; --muted: #8E8F95; --muted-light: #5C5D66;
+      --accent-dark: #C8956A; --accent-soft: #3A2E22; --border: #262936; --hero: #0A0B11; --on-hero: #F5F4EE;
+      --button: #C8956A; --on-button: #13141B; --bad: #E5867A;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .hero {
+    background: var(--hero); color: var(--on-hero);
+    padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 88px;
+    text-align: center;
+  }
+  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+  .brand img { width: 28px; height: auto; }
+  .brand span { font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+  main { max-width: 480px; margin: -64px auto 0; padding: 0 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    padding: 28px 22px; box-shadow: 0 10px 30px rgba(26, 31, 54, 0.08);
+  }
+  .center { text-align: center; }
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 14px;
+  }
+  h1 { font-size: 26px; line-height: 1.2; letter-spacing: -0.3px; margin: 0; overflow-wrap: anywhere; }
+  .sub { color: var(--muted); margin: 8px 0 0; font-size: 15px; }
+  .steps { margin: 24px 0 0; padding: 18px; border-radius: 14px; background: var(--accent-soft); text-align: center; }
+  .steps p { margin: 0; font-size: 15px; color: var(--ink); overflow-wrap: anywhere; }
+  .handle {
+    display: inline-block; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1px 8px;
+  }
+  .copy {
+    margin-top: 12px; appearance: none; -webkit-appearance: none; border: 1px solid var(--accent); background: transparent;
+    color: var(--accent-dark); font: inherit; font-size: 14px; font-weight: 600;
+    border-radius: 999px; padding: 7px 16px; cursor: pointer;
+  }
+  .soon { margin: 24px 0 0; text-align: center; color: var(--muted); font-size: 14px; font-weight: 600; }
+  .stores { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 12px; }
+  .stores > * { display: block; line-height: 0; }
+  .stores span { opacity: 0.55; }
+  .stores .apple img { height: 52px; width: auto; }
+  /* Google's badge carries its own padding, so it's drawn larger to match. */
+  .stores .google img { height: 77px; width: auto; margin: -12px 0; }
+  .perks-title { margin: 28px 0 4px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+  .perks { list-style: none; margin: 0; padding: 0; }
+  .perks li { position: relative; padding: 12px 0 12px 26px; border-bottom: 1px solid var(--border); }
+  .perks li:last-child { border-bottom: 0; }
+  .perks li::before {
+    content: ""; position: absolute; left: 2px; top: 19px; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent);
+  }
+  .perks strong { display: block; font-size: 15px; }
+  .perks span { display: block; color: var(--muted); font-size: 14px; }
+  .note { margin: 20px 0 0; color: var(--muted); font-size: 14px; text-align: center; }
+  .note.bad { color: var(--bad); }
+  .label { display: block; margin: 24px 0 8px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+  .link {
+    padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--muted-bg);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; overflow-wrap: anywhere;
+    -webkit-user-select: all; user-select: all;
+  }
+  .message {
+    margin: 0; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--muted-bg);
+    font-size: 15px; color: var(--ink-soft); overflow-wrap: anywhere;
+  }
+  .actions { display: flex; gap: 10px; margin-top: 12px; }
+  .actions > * { flex: 1 1 0; }
+  .go, .ghost {
+    display: block; width: 100%; padding: 13px 16px; border-radius: 12px; font: inherit; font-weight: 700; font-size: 15px;
+    cursor: pointer; appearance: none; -webkit-appearance: none; text-align: center;
+  }
+  .go { border: 0; background: var(--button); color: var(--on-button); }
+  .ghost { border: 1px solid var(--accent); background: transparent; color: var(--accent-dark); }
+  .fine { margin: 20px 0 0; padding-top: 14px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+  footer { text-align: center; color: var(--muted-light); font-size: 12px; margin-top: 24px; }
+  footer a { color: inherit; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+  <header class="hero">
+    <a class="brand" href="/">
+      <img src="/img/mark.png" alt="">
+      <span>BookNStyle</span>
+    </a>
+  </header>
+
+  <main>
+    <section class="card" aria-live="polite">
+
+      <!-- A pro being invited (also the plain page, and what shows without JavaScript) -->
+      <div id="invited">
+        <div class="center">
+          <p class="eyebrow" id="inv-eyebrow">For beauty pros</p>
+          <h1 id="inv-title">Join BookNStyle as a pro</h1>
+          <p class="sub">Bookings, reminders and payments in one app. Set up in minutes, share your link, and your clients book you the same day.</p>
+        </div>
+
+        <div class="steps" id="ref" hidden>
+          <p id="ref-line"></p>
+          <button class="copy" id="ref-copy" type="button" hidden>Copy handle</button>
+        </div>
+        <p class="note" id="ref-missing" hidden></p>
+
+        <p class="soon" id="soon">Coming soon on iPhone and Android</p>
+        <div class="stores" id="stores">
+          <span class="apple" id="apple" data-store="appStore" role="img" aria-label="App Store, coming soon">
+            <img src="/img/app-store.png" alt="">
+          </span>
+          <span class="google" id="google" data-store="googlePlay" role="img" aria-label="Google Play, coming soon">
+            <img src="/img/google-play.png" alt="">
+          </span>
+        </div>
+
+        <p class="perks-title">Why pros join</p>
+        <ul class="perks">
+          <li><strong>No commission</strong><span>Not on your services, deposits, tips or cancellation fees.</span></li>
+          <li><strong>No new-client fees</strong><span>A client who finds you in the app is still your client.</span></li>
+          <li><strong>Your rules</strong><span>Deposits, cancellation policy, reschedule cutoff and ID checks.</span></li>
+          <li><strong>Instant booking alerts</strong><span>Know the moment someone books you.</span></li>
+          <li><strong>Help with chargebacks</strong><span>We help you fight disputes with your booking records and the photos or notes you add.</span></li>
+          <li><strong>Set up in 10 minutes</strong><span>Add your services and hours, then share your link.</span></li>
+        </ul>
+      </div>
+
+      <!-- The referrer, from their email -->
+      <div id="share" hidden>
+        <div class="center">
+          <p class="eyebrow">Invite pros</p>
+          <h1>Invite pros to BookNStyle</h1>
+          <p class="sub">Send your invite link to pros you know. When one joins with your referral, we'll email you.</p>
+        </div>
+
+        <span class="label">Your invite link</span>
+        <div class="link" id="link"></div>
+        <div class="actions">
+          <button class="go" id="share-btn" type="button" hidden>Share</button>
+          <button class="ghost" id="copy-link" type="button" hidden>Copy link</button>
+        </div>
+
+        <span class="label">A message you can send</span>
+        <p class="message" id="message"></p>
+        <div class="actions">
+          <button class="ghost" id="copy-msg" type="button" hidden>Copy message</button>
+        </div>
+
+        <p class="fine" id="share-fine"></p>
+      </div>
+
+      <!-- The referrer, but the link has no handle we can use -->
+      <div id="share-missing" class="center" hidden>
+        <p class="eyebrow">Invite pros</p>
+        <h1>Invite pros to BookNStyle</h1>
+        <p class="sub" id="share-missing-text">We couldn't find your handle in this link. Open the BookNStyle app and go to Invite Clients: your handle is the last part of your booking link. Pros you invite enter it under Referred by when they sign up.</p>
+      </div>
+    </section>
+
+    <footer>
+      <a href="https://legal.booknstyle.com/terms/">Terms</a> ·
+      <a href="https://legal.booknstyle.com/privacy/">Privacy</a> ·
+      © BookNStyle LLC
+    </footer>
+  </main>
+
+<script>
+(function () {
+  'use strict';
+
+  // STORE LINKS: empty until the apps are live; fill both on launch day
+  // (RUNBOOK step 8). Empty: plain badge images under "Coming soon".
+  var STORE_LINKS = {
+    appStore: '',
+    googlePlay: ''
+  };
+
+  var SUPABASE_URL = 'https://ebrxekhmlxlccuvcwiwb.supabase.co';
+  // Public by design: the same publishable key is inside the app and index.html.
+  var SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_Vc4MPxSdXx1FmL3562bLUQ_A_KwQeVe';
+  var JOIN_URL = 'https://app.booknstyle.com/join/';
+  // The app's and the database's rule (lib/invites.ts, migration 031).
+  var HANDLE_PATTERN = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
+  // Words no pro can have as a handle (is_reserved_handle, migration 031).
+  var RESERVED = ['book', 'app', 'admin', 'www', 'api', 'help', 'support', 'login', 'signup'];
+
+  function $(id) { return document.getElementById(id); }
+
+  // ---- Store badges (the same switch as web/site/main.js) ----
+  var STORE_LABELS = { appStore: 'Download on the App Store', googlePlay: 'Get it on Google Play' };
+  var stores = $('stores');
+  if (/android/i.test(navigator.userAgent || '')) stores.insertBefore($('google'), $('apple'));
+  var badges = stores.querySelectorAll('[data-store]');
+  for (var b = 0; b < badges.length; b++) {
+    var badge = badges[b];
+    var key = badge.getAttribute('data-store');
+    var url = String(STORE_LINKS[key] || '').trim();
+    if (!/^https:\/\//i.test(url)) continue;
+    var a = document.createElement('a');
+    a.className = badge.className;
+    a.id = badge.id;
+    a.href = url;
+    a.rel = 'noopener';
+    a.setAttribute('aria-label', STORE_LABELS[key] || 'Download BookNStyle');
+    var img = badge.querySelector('img');
+    if (img) a.appendChild(img);
+    badge.parentNode.replaceChild(a, badge);
+  }
+  if (String(STORE_LINKS.appStore).trim() && String(STORE_LINKS.googlePlay).trim()) $('soon').hidden = true;
+
+  // ---- Copy and share ----
+  var canCopy = !!(navigator.clipboard && window.isSecureContext);
+
+  // A button that copies getText() and says "Copied" for 2 seconds. Hidden
+  // where the browser can't copy (the text is still there to select).
+  function copyButton(button, label, getText) {
+    if (!canCopy) { button.hidden = true; return; }
+    button.textContent = label;
+    button.hidden = false;
+    button.onclick = function () {
+      navigator.clipboard.writeText(getText()).then(function () {
+        button.textContent = 'Copied';
+        setTimeout(function () { button.textContent = label; }, 2000);
+      }, function () { /* the text is on the page to copy by hand */ });
+    };
+  }
+
+  // ---- Which page ----
+  var q = new URLSearchParams(location.search);
+  var shareMode = q.get('share') === '1';
+
+  function cleanHandle(raw) {
+    var h = String(raw || '').trim().replace(/^@/, '').toLowerCase();
+    return HANDLE_PATTERN.test(h) && RESERVED.indexOf(h) === -1 ? h : null;
+  }
+  var handle = cleanHandle(q.get('r'));
+
+  function inviteLink(h) { return JOIN_URL + '?r=' + h; }
+
+  // No prices and no competitor names (owner). The link goes last, so no
+  // punctuation sticks to it when a messaging app turns it into a link.
+  function messageFor(h) {
+    return "Hey! I use BookNStyle for my bookings and I think you'd like it too. " +
+      'No commission on your services, and clients can book you in a few taps. ' +
+      'When you sign up as a pro, enter @' + h + " under Referred by. Here's my invite: " + inviteLink(h);
+  }
+
+  // Keep the address bar on the current handle, so a link copied from it is
+  // the one that keeps working.
+  function fixAddress(h) {
+    if (!history.replaceState) return;
+    try { history.replaceState(null, '', '/join/?r=' + h + (shareMode ? '&share=1' : '')); } catch (e) { /* keep it */ }
+  }
+
+  // ---- The referrer ----
+  function showShare(h) {
+    $('invited').hidden = true;
+    $('share-missing').hidden = true;
+    $('share').hidden = false;
+    document.title = 'Invite pros to BookNStyle';
+    $('link').textContent = inviteLink(h);
+    $('message').textContent = messageFor(h);
+    $('share-fine').textContent = 'Pros you invite enter @' + h + ' under Referred by when they sign up. That is how we know they came from you.';
+
+    var shareBtn = $('share-btn');
+    if (navigator.share) {
+      shareBtn.hidden = false;
+      shareBtn.onclick = function () {
+        // The message already ends with the link, so it isn't sent twice.
+        navigator.share({ text: messageFor(h) }).catch(function () { /* cancelled */ });
+      };
+    } else {
+      shareBtn.hidden = true;
+    }
+    copyButton($('copy-link'), 'Copy link', function () { return inviteLink(h); });
+    copyButton($('copy-msg'), 'Copy message', function () { return messageFor(h); });
+  }
+
+  function showShareMissing() {
+    $('invited').hidden = true;
+    $('share').hidden = true;
+    $('share-missing').hidden = false;
+    document.title = 'Invite pros to BookNStyle';
+  }
+
+  // ---- A pro being invited ----
+  function showInvited(h, name) {
+    $('share').hidden = true;
+    $('share-missing').hidden = true;
+    $('invited').hidden = false;
+    $('ref-missing').hidden = true;
+    var who = name || ('@' + h);
+    $('inv-eyebrow').textContent = "You're invited";
+    $('inv-title').textContent = who + ' invited you to BookNStyle';
+    document.title = who + ' invited you to BookNStyle';
+
+    var line = $('ref-line');
+    while (line.firstChild) line.removeChild(line.firstChild);
+    // "as a pro": the client sign-up has no Referred by field.
+    line.appendChild(document.createTextNode('When you sign up as a pro, enter '));
+    var tag = document.createElement('span');
+    tag.className = 'handle';
+    tag.textContent = '@' + h;
+    line.appendChild(tag);
+    line.appendChild(document.createTextNode(' in Referred by.'));
+    $('ref').hidden = false;
+    // The app accepts it with or without the "@".
+    copyButton($('ref-copy'), 'Copy handle', function () { return h; });
+  }
+
+  function showPlain(notFound) {
+    $('share').hidden = true;
+    $('share-missing').hidden = true;
+    $('invited').hidden = false;
+    $('ref').hidden = true;
+    $('inv-eyebrow').textContent = 'For beauty pros';
+    $('inv-title').textContent = 'Join BookNStyle as a pro';
+    document.title = 'Join BookNStyle as a pro';
+    var note = $('ref-missing');
+    if (notFound) {
+      note.textContent = "We couldn't find the pro who sent this link. If they gave you their handle, enter it in Referred by when you sign up.";
+      note.className = 'note bad';
+      note.hidden = false;
+    } else {
+      note.hidden = true;
+    }
+  }
+
+  function render(h, name) {
+    if (shareMode) showShare(h);
+    else showInvited(h, name);
+  }
+
+  if (!handle) {
+    // No handle, or one no pro can have. A bare /join/ is the plain page.
+    if (shareMode) showShareMissing();
+    else showPlain(q.has('r'));
+    return;
+  }
+
+  // Straight away, from the link itself.
+  render(handle, null);
+
+  // Then the pro's name and current handle. If this fails (offline, the
+  // server is down), the page above stays as it is.
+  fetch(SUPABASE_URL + '/rest/v1/rpc/get_pro_invite_card', {
+    method: 'POST',
+    headers: { 'apikey': SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_handle: handle }),
+    credentials: 'omit'
+  })
+    .then(function (res) { return res.ok ? res.json() : undefined; })
+    .then(function (card) {
+      if (card === undefined) return;
+      if (!card || !card.id) {
+        // No pro has this handle (any more).
+        if (shareMode) showShareMissing();
+        else showPlain(true);
+        return;
+      }
+      var current = cleanHandle(card.handle) || handle;
+      if (current !== handle) fixAddress(current);
+      var name = typeof card.name === 'string' ? card.name.replace(/\s+/g, ' ').trim().slice(0, 60) : '';
+      render(current, name && name !== current ? name : null);
+    })
+    .catch(function () { /* keep what is shown */ });
+})();
+</script>
+</body>
+</html>
