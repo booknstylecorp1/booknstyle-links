@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Get BookNStyle</title>
+<meta name="description" content="Get the BookNStyle app on the App Store or Google Play.">
+<meta name="robots" content="noindex">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="theme-color" content="#1A1F36">
+<link rel="icon" href="/img/mark.png">
+<noscript><meta http-equiv="refresh" content="0;url=/join/"></noscript>
+<!--
+  https://app.booknstyle.com/get : the smart link printed as the QR code on
+  the pro postcards (Oct 2026). One code for every phone:
+    iPhone or iPad   -> the App Store page
+    Android          -> the Google Play page
+    anything else    -> /join/ (what pros get, with both store buttons)
+  Until launch day STORE_LINKS is empty, so everyone lands on /join/, which
+  says "Coming soon". Fill both links on launch day together with
+  web/site/main.js and join/index.html (RUNBOOK step 8). The printed URL
+  never changes, so postcards printed before launch keep working.
+
+  Rules for this page: no prices, no competitor names, no full-screen
+  spinner (owner). Must not link to the billing page
+  (scripts/billing-guard.mjs).
+-->
+<style>
+  :root {
+    --bg: #FAFAF7; --ink: #1A1F36; --muted: #6B6B7B; --accent: #C8956A; --border: #EFEAE0; --surface: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0E1018; --ink: #F5F4EE; --muted: #8E8F95; --accent: #C8956A; --border: #262936; --surface: #181B26; }
+  }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body { font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 420px; margin: 0 auto; padding: 48px 16px; text-align: center; }
+  .mark { letter-spacing: .32em; font-size: 13px; font-weight: 600; color: var(--accent); }
+  h1 { font-size: 24px; margin: 20px 0 8px; }
+  p { margin: 0 0 16px; color: var(--muted); }
+  a { color: var(--ink); }
+  .links a { display: block; margin: 10px 0; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; text-decoration: none; font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <div class="mark">BOOKNSTYLE</div>
+  <h1 id="title">Taking you to BookNStyle</h1>
+  <p id="note">If nothing happens, pick your store below.</p>
+  <div class="links" id="links">
+    <a id="join" href="/join/">See what pros get with BookNStyle</a>
+  </div>
+</main>
+<script>
+(function () {
+  'use strict';
+
+  // STORE LINKS: empty until the apps are live; fill both on launch day
+  // (RUNBOOK step 8), for example
+  //   appStore:   'https://apps.apple.com/us/app/booknstyle/id6813224710'
+  //   googlePlay: 'https://play.google.com/store/apps/details?id=com.booknstyle.app'
+  var STORE_LINKS = {
+    appStore: '',
+    googlePlay: ''
+  };
+  var JOIN = '/join/';
+
+  function link(key) {
+    var url = String(STORE_LINKS[key] || '').trim();
+    return /^https:\/\//i.test(url) ? url : '';
+  }
+
+  var ua = navigator.userAgent || '';
+  // iPadOS 13 and later says "Macintosh"; a touch screen tells it apart.
+  var isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/i.test(ua);
+
+  var appStore = link('appStore');
+  var googlePlay = link('googlePlay');
+
+  // Manual choices, in case a browser blocks the automatic redirect.
+  var box = document.getElementById('links');
+  function addLink(href, text) {
+    var a = document.createElement('a');
+    a.href = href;
+    a.rel = 'noopener';
+    a.textContent = text;
+    box.insertBefore(a, document.getElementById('join'));
+  }
+  if (googlePlay && isAndroid) addLink(googlePlay, 'Get it on Google Play');
+  if (appStore) addLink(appStore, 'Download on the App Store');
+  if (googlePlay && !isAndroid) addLink(googlePlay, 'Get it on Google Play');
+
+  var target = JOIN;
+  if (isIOS && appStore) target = appStore;
+  else if (isAndroid && googlePlay) target = googlePlay;
+
+  location.replace(target);
+})();
+</script>
+</body>
+</html>
