@@ -2,15 +2,15 @@
 // See the comment in index.html for why it exists.
 //
 // Safety rules for this file:
-//   * Text from the server or the user is only ever set with textContent —
-//     never innerHTML — so nothing typed into a profile can become markup.
+//   * Text from the server or the user is only ever set with textContent,
+//     never innerHTML, so nothing typed into a profile can become markup.
 //   * We only send the browser to Stripe's own pages (checked below).
 //   * No trackers or analytics.
 (function () {
   'use strict';
 
   var SUPABASE_URL = 'https://ebrxekhmlxlccuvcwiwb.supabase.co';
-  // Supabase's PUBLIC publishable key — the same one inside the app and on
+  // Supabase's PUBLIC publishable key, the same one inside the app and on
   // this site's invite pages. It can only do what the anon role may do.
   var SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_Vc4MPxSdXx1FmL3562bLUQ_A_KwQeVe';
   var PAGE_URL = 'https://app.booknstyle.com/pro/';
@@ -250,6 +250,39 @@
     $('account-title').textContent = 'Your Pro plan';
     var status = plan.status || 'none';
 
+    // Billed through Apple (In-App Purchase on the iPhone, migration 051).
+    // Nothing on this page can change what Apple charges: no Manage button,
+    // no card page and no prices (the App Store shows them). Apple's own
+    // settings are where the plan is managed. A lapsed Apple plan falls
+    // through to the plan choice below (a web plan may replace it); one
+    // Apple is still retrying is refused by the server, so it shows as a
+    // payment problem here, with Apple's instructions.
+    var appleText = 'Your plan is billed through Apple. Manage or cancel it on your iPhone: Settings > Apple Account > Subscriptions.';
+    if (plan.source === 'apple') {
+      if (ACTIVE.indexOf(status) >= 0) {
+        $('active-badge').textContent = status === 'trialing' ? 'Free month' : 'Active';
+        $('active-plan').textContent = plan.plan === 'annual' ? 'Annual plan' : 'Monthly plan';
+        $('active-date-row').hidden = true;
+        $('manage').hidden = true;
+        $('manage-fine').hidden = true;
+        $('active-text').textContent = plan.cancel_at_period_end
+          ? appleText + ' It is set to end on ' + (longDate(plan.current_period_end) || 'the date in your Apple settings') + '. You keep full access until then.'
+          : appleText;
+        show('plan-active');
+        return;
+      }
+      if (status === 'past_due') {
+        $('problem-text').textContent = 'Apple couldn\'t charge your payment method, so new bookings are paused. Update it on your iPhone: Settings > Apple Account > Subscriptions. Your plan comes back as soon as the payment goes through. Or cancel it there to switch to paying on this website.';
+        $('fix-card').hidden = true;
+        show('plan-problem');
+        return;
+      }
+    } else {
+      // The Stripe wording, in case this page was drawn for an Apple plan before.
+      $('problem-text').textContent = 'Your last payment didn\'t go through. Update your card to keep taking new bookings.';
+      $('fix-card').hidden = false;
+    }
+
     if (ACTIVE.indexOf(status) >= 0) {
       var trialing = status === 'trialing';
       $('active-badge').textContent = trialing ? 'Free month' : 'Active';
@@ -276,7 +309,7 @@
         $('active-date-label').textContent = trialing ? 'First bill on' : 'Next bill on';
         $('active-text').textContent = 'You’re all set. Clients can find you and book you.';
       }
-      $('active-date').textContent = date || 'n/a';
+      $('active-date').textContent = date || 'Not available';
       show('plan-active');
       return;
     }
