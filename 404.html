@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://app.booknstyle.com/og/default.png">
 <meta name="apple-itunes-app" content="app-id=6813224710">
-<meta name="theme-color" content="#1A1F36">
+<meta name="theme-color" content="#0A0B11">
 <link rel="icon" href="/img/mark.png">
 <!--
   Invite page for https://app.booknstyle.com/book/<handle>.
@@ -32,104 +32,150 @@
   get_pro_invite_card function (migration 031, which also accepts a pro's
   old handle for 90 days after they change it — migration 040).
 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..500;1,6..96,400..500&amp;family=Inter:wght@400;500;600&amp;display=swap">
 <style>
+  /* The same "Editorial Luxe" look as booknstyle.com and its waitlist (web/site/styles.css):
+     ink ground, navy card with a champagne hairline, Bodoni Moda headlines, Inter text,
+     the champagne gradient button. Dark only, like the website. */
   :root {
-    --bg: #FAFAF7; --surface: #FFFFFF; --muted-bg: #F4F1EA;
-    --ink: #1A1F36; --ink-soft: #3D4258; --muted: #6B6B7B; --muted-light: #A8A8B3;
-    --accent: #C8956A; --accent-dark: #A57A55; --accent-soft: #F1E5D6;
-    --border: #EFEAE0; --hero: #1A1F36; --on-hero: #FFFFFF;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0E1018; --surface: #181B26; --muted-bg: #222530;
-      --ink: #F5F4EE; --ink-soft: #C7C6BD; --muted: #8E8F95; --muted-light: #5C5D66;
-      --accent-soft: #3A2E22; --border: #262936; --hero: #0A0B11; --on-hero: #F5F4EE;
-    }
+    --ink-0: #0A0B11; --navy: #16182B; --navy-2: #1D2038;
+    --text: #F5F4EE; --text-2: rgba(245, 244, 238, .76); --text-3: rgba(245, 244, 238, .56);
+    --champ: #C8956A; --champ-l: #DFB990; --ink-text: #16182B;
+    --line: rgba(223, 185, 144, .24); --line-soft: rgba(245, 244, 238, .09);
+    --grad-gold: linear-gradient(135deg, #EACBA5 0%, #D7A97E 38%, #C8956A 62%, #B5825A 100%);
+    --grad-gold-text: linear-gradient(100deg, #F0D3AE 0%, #DFB990 35%, #C8956A 70%, #E7C59D 100%);
+    --serif: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: dark;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
+  h1, p, ul { margin: 0; }
   body {
-    background: var(--bg); color: var(--ink);
-    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
+    min-height: 100vh; min-height: 100dvh; position: relative; overflow-x: hidden;
+    background: var(--ink-0); color: var(--text);
+    font: 16px/1.6 var(--sans); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
   }
-  .hero {
-    background: var(--hero); color: var(--on-hero);
-    padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 88px;
-    text-align: center;
+  /* a soft champagne light behind the card, and the website's film grain */
+  body::before {
+    content: ""; position: fixed; inset: -20% -40% auto; height: 80vh; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(200, 149, 106, .16), rgba(200, 149, 106, 0));
   }
-  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
-  .brand img { width: 28px; height: auto; }
-  .brand span { font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
-  main { max-width: 480px; margin: -64px auto 0; padding: 0 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .06; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  ::selection { background: rgba(200, 149, 106, .38); color: #fff; }
+  :focus-visible { outline: 2px solid var(--champ-l); outline-offset: 3px; border-radius: 6px; }
+
+  .top { position: relative; z-index: 1; padding: calc(34px + env(safe-area-inset-top, 0px)) 16px 0; text-align: center; }
+  .brand { display: inline-flex; flex-direction: column; align-items: center; text-decoration: none; color: inherit; }
+  .brand img { width: 50px; height: auto; filter: drop-shadow(0 5px 10px rgba(0, 0, 0, .5)); }
+  .brand span { margin-top: 12px; font-size: 12px; font-weight: 600; letter-spacing: .42em; margin-right: -.42em; }
+  .brand i { display: block; width: 72px; height: 1px; margin-top: 12px; background: linear-gradient(90deg, rgba(200,149,106,0), var(--champ), rgba(200,149,106,0)); }
+
+  main { position: relative; z-index: 1; max-width: 480px; margin: 30px auto 0; padding: 0 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
   .card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
-    padding: 28px 22px; box-shadow: 0 10px 30px rgba(26, 31, 54, 0.08);
+    background: linear-gradient(180deg, rgba(29, 32, 56, .9), rgba(22, 24, 43, .96));
+    border: 1px solid var(--line); border-radius: 28px;
+    padding: 36px 24px 30px; box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .7);
   }
   .center { text-align: center; }
   .eyebrow {
-    font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
-    color: var(--accent); margin: 0 0 14px;
+    display: inline-flex; align-items: center; gap: 12px; margin: 0 0 18px;
+    font-size: 12px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; color: var(--champ-l);
   }
+  .eyebrow::before, .eyebrow::after { content: ""; width: 26px; height: 1px; background: currentColor; opacity: .55; }
   .avatar {
-    width: 104px; height: 104px; border-radius: 50%; margin: 0 auto 16px; display: block;
-    object-fit: cover; border: 3px solid var(--accent); background: var(--muted-bg);
+    width: 112px; height: 112px; border-radius: 50%; margin: 0 auto 20px; display: block;
+    object-fit: cover; background: var(--navy-2);
+    box-shadow: 0 0 0 2px var(--ink-0), 0 0 0 3.5px var(--champ), 0 18px 40px -12px rgba(0, 0, 0, .7);
   }
   .initials {
     display: flex; align-items: center; justify-content: center;
-    font-size: 38px; font-weight: 700; color: var(--ink);
+    font-family: var(--serif); font-size: 42px; font-weight: 500; color: var(--champ-l);
   }
-  h1 { font-size: 26px; line-height: 1.2; letter-spacing: -0.3px; margin: 0; }
-  .sub { color: var(--muted); margin: 6px 0 0; font-size: 15px; }
-  .services { list-style: none; margin: 24px 0 0; padding: 0; border-top: 1px solid var(--border); }
+  h1 {
+    font-family: var(--serif); font-weight: 400; font-size: 36px; line-height: 1.08;
+    letter-spacing: -.02em; text-wrap: balance; overflow-wrap: anywhere;
+  }
+  h1 em {
+    font-style: italic; background: var(--grad-gold-text); -webkit-background-clip: text; background-clip: text;
+    color: transparent; padding-right: .06em;
+  }
+  .sub { color: var(--text-2); margin: 12px auto 0; font-size: 16px; max-width: 30em; text-wrap: pretty; }
+  #pro .sub { margin-top: 6px; font-size: 15px; color: var(--text-3); }
+  #pro .sub:first-of-type { margin-top: 10px; }
+  .services { list-style: none; margin: 28px 0 0; padding: 0; border-top: 1px solid var(--line-soft); }
   .services li {
     display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
-    padding: 14px 0; border-bottom: 1px solid var(--border);
+    padding: 15px 0; border-bottom: 1px solid var(--line-soft);
   }
-  .svc-name { font-weight: 600; }
-  .svc-dur { display: block; color: var(--muted); font-size: 13px; font-weight: 400; }
-  .svc-price { font-weight: 700; white-space: nowrap; }
-  .steps { margin: 24px 0 0; padding: 18px; border-radius: 14px; background: var(--accent-soft); }
-  .steps p { margin: 0; font-size: 15px; color: var(--ink); }
+  .svc-name { font-weight: 500; }
+  .svc-dur { display: block; color: var(--text-3); font-size: 13px; font-weight: 400; }
+  .svc-price { font-weight: 600; white-space: nowrap; color: var(--champ-l); }
+  .steps { margin: 26px 0 0; padding: 20px 18px; border-radius: 20px; background: rgba(200, 149, 106, .07); border: 1px solid var(--line-soft); }
+  .steps p { margin: 0; font-size: 15px; color: var(--text-2); }
   .handle {
-    display: inline-block; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1px 8px;
+    display: inline-block; font-weight: 600; color: var(--text);
+    background: rgba(10, 11, 17, .6); border: 1px solid var(--line); border-radius: 8px; padding: 0 8px;
   }
   .copy {
-    margin-top: 12px; appearance: none; border: 1px solid var(--accent); background: transparent;
-    color: var(--accent-dark); font: inherit; font-size: 14px; font-weight: 600;
-    border-radius: 999px; padding: 7px 16px; cursor: pointer;
+    margin-top: 14px; appearance: none; border: 0; background: transparent; cursor: pointer;
+    box-shadow: inset 0 0 0 1px var(--line); color: var(--champ-l);
+    font: 600 14px var(--sans); border-radius: 999px; padding: 9px 18px;
   }
-  @media (prefers-color-scheme: dark) { .copy { color: var(--accent); } }
-  .stores { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 24px; }
+  .copy:hover { box-shadow: inset 0 0 0 1px var(--champ-l); }
+  .stores { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 28px; }
   .stores a { display: block; line-height: 0; }
   .stores .apple img { height: 52px; width: auto; }
   /* Google's badge carries its own padding, so it's drawn larger to match. */
   .stores .google img { height: 77px; width: auto; margin: -12px 0; }
-  .perks { color: var(--muted); font-size: 14px; margin: 20px 0 0; text-align: center; }
-  .loading { display: flex; justify-content: center; padding: 36px 0; }
-  .spinner {
-    width: 28px; height: 28px; border-radius: 50%;
-    border: 3px solid var(--border); border-top-color: var(--accent);
-    animation: spin 0.8s linear infinite;
+  .perks { color: var(--text-3); font-size: 14px; margin: 22px 0 0; text-align: center; }
+  /* A held waitlist name: the website's gold button. */
+  .join {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px; margin-top: 28px;
+    min-height: 56px; padding: 0 30px; border-radius: 999px; text-decoration: none;
+    background: var(--grad-gold); color: var(--ink-text); font-weight: 600; font-size: 16px; letter-spacing: .01em;
+    box-shadow: 0 10px 30px -12px rgba(200, 149, 106, .65), inset 0 1px 0 rgba(255, 255, 255, .35);
+    transition: transform .5s cubic-bezier(.16, 1, .3, 1), box-shadow .5s cubic-bezier(.16, 1, .3, 1);
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  footer { text-align: center; color: var(--muted-light); font-size: 12px; margin-top: 24px; }
-  footer a { color: inherit; }
+  .join svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .join:hover { transform: translateY(-2px); box-shadow: 0 18px 40px -14px rgba(200, 149, 106, .8), inset 0 1px 0 rgba(255, 255, 255, .4); }
+  .note { margin-top: 16px; font-size: 13px; color: var(--text-3); }
+  /* While the page asks who the link belongs to: a quiet placeholder of the card, no spinner */
+  .loading { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 6px 0 4px; }
+  .ph { background: rgba(245, 244, 238, .07); border-radius: 999px; }
+  .ph--round { width: 112px; height: 112px; border-radius: 50%; margin-bottom: 6px; }
+  .ph--title { width: 62%; height: 30px; }
+  .ph--line { width: 44%; height: 14px; }
+  footer { text-align: center; color: var(--text-3); font-size: 12px; margin-top: 28px; }
+  footer a { color: inherit; text-decoration: none; }
+  footer a:hover { color: var(--champ-l); }
   [hidden] { display: none !important; }
+  @media (min-width: 560px) {
+    main { margin-top: 40px; }
+    .card { padding: 44px 40px 36px; }
+    h1 { font-size: 42px; }
+  }
 </style>
 </head>
 <body>
-  <header class="hero">
-    <a class="brand" href="/">
+  <header class="top">
+    <a class="brand" href="https://booknstyle.com/" aria-label="BookNStyle home">
       <img src="/img/mark.png" alt="">
-      <span>BookNStyle</span>
+      <span>BOOKNSTYLE</span>
+      <i></i>
     </a>
   </header>
 
   <main>
     <section class="card" id="card" aria-live="polite">
-      <div class="loading" id="loading"><div class="spinner" aria-label="Loading"></div></div>
+      <div class="loading" id="loading" aria-label="Loading">
+        <div class="ph ph--round"></div><div class="ph ph--title"></div><div class="ph ph--line"></div>
+      </div>
 
       <!-- A pro's invite -->
       <div id="pro" hidden>
@@ -147,11 +193,14 @@
         </div>
       </div>
 
-      <!-- No handle, or one we don't know -->
+      <!-- No handle, one we don't know, or a name held on the waitlist -->
       <div id="generic" class="center" hidden>
         <p class="eyebrow" id="generic-eyebrow">BookNStyle</p>
-        <h1 id="generic-title">Book beauty pros near you</h1>
+        <h1 id="generic-title">Book beauty pros <em>near you</em></h1>
         <p class="sub" id="generic-sub">Hair, nails, barbers, lashes and more. Book in a few taps.</p>
+        <a class="join" id="held-join" href="https://booknstyle.com/waitlist/" hidden>Join the list
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <p class="note" id="held-note" hidden>Launching soon in New York.</p>
       </div>
 
       <div class="stores" id="stores" hidden>
@@ -221,6 +270,28 @@
     }
     show('generic');
     finish();
+  }
+
+  // A pro on the waitlist holds this name (055): they haven't signed up in
+  // the app yet, so there's no card. Say so, and send their clients to the
+  // waitlist (after launch that page says "Get the app"). The name rides
+  // along as utm_campaign, so sign-ups show which pro's link brought them.
+  function showHeld(handle) {
+    document.title = '@' + handle + ' is coming to BookNStyle';
+    $('generic-eyebrow').textContent = 'Coming soon';
+    // "@handle" in the champagne italic, the rest plain (built as text, never as HTML)
+    var title = $('generic-title');
+    title.textContent = '';
+    var em = document.createElement('em');
+    em.textContent = '@' + handle;
+    title.appendChild(em);
+    title.appendChild(document.createTextNode(' is coming to BookNStyle'));
+    $('generic-sub').textContent = "Their booking link is claimed. Join the list and we'll email you the day BookNStyle launches.";
+    $('held-join').href = 'https://booknstyle.com/waitlist/?role=client&utm_source=pro_link&utm_campaign=' + encodeURIComponent(handle);
+    show('held-join');
+    show('held-note');
+    show('generic');
+    hide('loading');
   }
 
   function showPro(card, handle) {
@@ -327,8 +398,19 @@
   })
     .then(function (res) { return res.ok ? res.json() : null; })
     .then(function (card) {
-      if (card && card.id) showPro(card, handle);
-      else showGeneric(true);
+      if (card && card.id) { showPro(card, handle); return; }
+      // No pro yet: is the name held on the waitlist? Before 055 is applied
+      // this answers 404, and the page says "couldn't find" as before.
+      return fetch(SUPABASE_URL + '/rest/v1/rpc/waitlist_handle_is_held', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_handle: handle })
+      })
+        .then(function (res) { return res.ok ? res.json() : false; })
+        .then(function (held) {
+          if (held === true) showHeld(handle);
+          else showGeneric(true);
+        });
     })
     .catch(function () {
       // Offline or the server is down: still let them get the app.
