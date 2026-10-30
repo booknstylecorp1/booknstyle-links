@@ -17,11 +17,13 @@
 <meta name="twitter:image" content="https://app.booknstyle.com/og/default.png">
 <!--
   Nothing from any other host except one read-only call to BookNStyle's
-  Supabase project. The script is inline (this page is one self-contained
-  file), and it only ever writes text (textContent), never markup.
+  Supabase project. The script is inline, and it only ever writes text
+  (textContent), never markup. The look and its fonts come from this site
+  (/assets/editorial.css, /assets/webfonts/): style-src and font-src 'self'.
 -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self'; connect-src https://ebrxekhmlxlccuvcwiwb.supabase.co; form-action 'none'; base-uri 'none'">
-<meta name="theme-color" content="#1A1F36">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src https://ebrxekhmlxlccuvcwiwb.supabase.co; form-action 'none'; base-uri 'none'">
+<meta name="theme-color" content="#0A0B11">
+<meta name="color-scheme" content="dark">
 <link rel="icon" href="/img/mark.png">
 <!--
   https://app.booknstyle.com/join/ : pro-to-pro invites (migration 049).
@@ -63,109 +65,66 @@
   live. Empty: the badges are plain images under "Coming soon on iPhone and
   Android". Fill both on launch day (RUNBOOK step 8), the same two URLs as
   web/site/main.js.
+
+  The look: the website's (booknstyle.com), from /assets/editorial.css, the
+  same as the booking page (index.html). Dark only.
 -->
+<link rel="stylesheet" href="/assets/editorial.css">
 <style>
-  :root {
-    --bg: #FAFAF7; --surface: #FFFFFF; --muted-bg: #F4F1EA;
-    --ink: #1A1F36; --ink-soft: #3D4258; --muted: #6B6B7B; --muted-light: #A8A8B3;
-    --accent: #C8956A; --accent-dark: #A57A55; --accent-soft: #F1E5D6;
-    --border: #EFEAE0; --hero: #1A1F36; --on-hero: #FFFFFF;
-    --button: #1A1F36; --on-button: #FFFFFF; --bad: #B3261E;
+  /* Only what this page has. The rest is /assets/editorial.css. */
+  .note { margin: 20px 0 0; color: var(--text-3); font-size: 14px; text-align: center; }
+  .note.bad { color: var(--danger); }
+  .soon { margin: 30px 0 0; text-align: center; color: var(--text-3); font-size: 14px; font-weight: 500; }
+  .soon:not([hidden]) + .stores { margin-top: 14px; }
+  /* Not live yet: the website's "soon" badges */
+  .stores span { opacity: .55; filter: grayscale(.2); }
+
+  /* Why pros join: the website's pro list (serif titles, gold numerals, thin rules) */
+  .perks-title {
+    display: flex; align-items: center; gap: 14px; margin: 38px 0 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; color: var(--champ-l);
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0E1018; --surface: #181B26; --muted-bg: #222530;
-      --ink: #F5F4EE; --ink-soft: #C7C6BD; --muted: #8E8F95; --muted-light: #5C5D66;
-      --accent-dark: #C8956A; --accent-soft: #3A2E22; --border: #262936; --hero: #0A0B11; --on-hero: #F5F4EE;
-      --button: #C8956A; --on-button: #13141B; --bad: #E5867A;
-    }
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; }
-  body {
-    background: var(--bg); color: var(--ink);
-    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  .hero {
-    background: var(--hero); color: var(--on-hero);
-    padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 88px;
-    text-align: center;
-  }
-  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
-  .brand img { width: 28px; height: auto; }
-  .brand span { font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
-  main { max-width: 480px; margin: -64px auto 0; padding: 0 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
-  .card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
-    padding: 28px 22px; box-shadow: 0 10px 30px rgba(26, 31, 54, 0.08);
-  }
-  .center { text-align: center; }
-  .eyebrow {
-    font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
-    color: var(--accent); margin: 0 0 14px;
-  }
-  h1 { font-size: 26px; line-height: 1.2; letter-spacing: -0.3px; margin: 0; overflow-wrap: anywhere; }
-  .sub { color: var(--muted); margin: 8px 0 0; font-size: 15px; }
-  .steps { margin: 24px 0 0; padding: 18px; border-radius: 14px; background: var(--accent-soft); text-align: center; }
-  .steps p { margin: 0; font-size: 15px; color: var(--ink); overflow-wrap: anywhere; }
-  .handle {
-    display: inline-block; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1px 8px;
-  }
-  .copy {
-    margin-top: 12px; appearance: none; -webkit-appearance: none; border: 1px solid var(--accent); background: transparent;
-    color: var(--accent-dark); font: inherit; font-size: 14px; font-weight: 600;
-    border-radius: 999px; padding: 7px 16px; cursor: pointer;
-  }
-  .soon { margin: 24px 0 0; text-align: center; color: var(--muted); font-size: 14px; font-weight: 600; }
-  .stores { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 12px; }
-  .stores > * { display: block; line-height: 0; }
-  .stores span { opacity: 0.55; }
-  .stores .apple img { height: 52px; width: auto; }
-  /* Google's badge carries its own padding, so it's drawn larger to match. */
-  .stores .google img { height: 77px; width: auto; margin: -12px 0; }
-  .perks-title { margin: 28px 0 4px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
-  .perks { list-style: none; margin: 0; padding: 0; }
-  .perks li { position: relative; padding: 12px 0 12px 26px; border-bottom: 1px solid var(--border); }
-  .perks li:last-child { border-bottom: 0; }
+  .perks-title::before, .perks-title::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .perks { list-style: none; margin: 0; padding: 0; counter-reset: perk; }
+  .perks li { position: relative; padding: 16px 0 16px 34px; border-bottom: 1px solid var(--line-soft); counter-increment: perk; }
+  .perks li:last-child { border-bottom: 0; padding-bottom: 2px; }
   .perks li::before {
-    content: ""; position: absolute; left: 2px; top: 19px; width: 10px; height: 10px; border-radius: 50%;
-    background: var(--accent);
+    content: counter(perk, lower-roman) ".";
+    content: counter(perk, lower-roman) "." / "";
+    position: absolute; left: 0; top: 18px;
+    font-family: var(--serif); font-style: italic; font-size: 15px; line-height: 1.2; color: var(--champ);
   }
-  .perks strong { display: block; font-size: 15px; }
-  .perks span { display: block; color: var(--muted); font-size: 14px; }
-  .note { margin: 20px 0 0; color: var(--muted); font-size: 14px; text-align: center; }
-  .note.bad { color: var(--bad); }
-  .label { display: block; margin: 24px 0 8px; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+  .perks strong { display: block; font-family: var(--serif); font-weight: 400; font-size: 20px; line-height: 1.2; letter-spacing: -.01em; color: var(--text); }
+  .perks span { display: block; margin-top: 4px; color: var(--text-2); font-size: 14px; line-height: 1.55; }
+
+  /* The referrer's page: the invite link and the message in navy fields */
+  .label { display: block; margin: 30px 0 10px; font-size: 12px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--champ-l); }
   .link {
-    padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--muted-bg);
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; overflow-wrap: anywhere;
+    padding: 14px 16px; border: 1px solid var(--field-line); border-radius: 16px; background: var(--field);
+    color: var(--text); font-size: 15px; font-weight: 500; overflow-wrap: anywhere;
     -webkit-user-select: all; user-select: all;
   }
   .message {
-    margin: 0; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--muted-bg);
-    font-size: 15px; color: var(--ink-soft); overflow-wrap: anywhere;
+    margin: 0; padding: 14px 16px; border: 1px solid var(--field-line); border-radius: 16px; background: var(--field);
+    font-size: 15px; line-height: 1.55; color: var(--text-2); overflow-wrap: anywhere;
   }
   .actions { display: flex; gap: 10px; margin-top: 12px; }
-  .actions > * { flex: 1 1 0; }
-  .go, .ghost {
-    display: block; width: 100%; padding: 13px 16px; border-radius: 12px; font: inherit; font-weight: 700; font-size: 15px;
-    cursor: pointer; appearance: none; -webkit-appearance: none; text-align: center;
+  .actions > * { flex: 1 1 0; min-width: 0; }
+  .actions .btn { min-height: 52px; padding: 0 18px; }
+  /* No Share button here (most computers): Copy link is the main action, so it's the gold one */
+  .actions:has(> #share-btn[hidden]) > #copy-link {
+    background: var(--grad-gold); color: var(--ink-text);
+    box-shadow: 0 10px 30px -12px rgba(200, 149, 106, .65), inset 0 1px 0 rgba(255, 255, 255, .35);
   }
-  .go { border: 0; background: var(--button); color: var(--on-button); }
-  .ghost { border: 1px solid var(--accent); background: transparent; color: var(--accent-dark); }
-  .fine { margin: 20px 0 0; padding-top: 14px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
-  footer { text-align: center; color: var(--muted-light); font-size: 12px; margin-top: 24px; }
-  footer a { color: inherit; }
-  [hidden] { display: none !important; }
+  .fine { margin: 26px 0 0; padding-top: 16px; border-top: 1px solid var(--line-soft); color: var(--text-3); font-size: 13px; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
-  <header class="hero">
+  <header class="top">
     <a class="brand" href="/">
       <img src="/img/mark.png" alt="">
       <span>BookNStyle</span>
+      <i></i>
     </a>
   </header>
 
@@ -176,7 +135,7 @@
       <div id="invited">
         <div class="center">
           <p class="eyebrow" id="inv-eyebrow">For beauty pros</p>
-          <h1 id="inv-title">Join BookNStyle as a pro</h1>
+          <h1 id="inv-title">Join BookNStyle as a <em>pro</em></h1>
           <p class="sub">Bookings, reminders and payments in one app. Set up in minutes, share your link, and your clients book you the same day.</p>
         </div>
 
@@ -211,21 +170,21 @@
       <div id="share" hidden>
         <div class="center">
           <p class="eyebrow">Invite pros</p>
-          <h1>Invite pros to BookNStyle</h1>
+          <h1>Invite <em>pros</em> to BookNStyle</h1>
           <p class="sub">Send your invite link to pros you know. When one joins with your referral, we'll email you.</p>
         </div>
 
         <span class="label">Your invite link</span>
         <div class="link" id="link"></div>
         <div class="actions">
-          <button class="go" id="share-btn" type="button" hidden>Share</button>
-          <button class="ghost" id="copy-link" type="button" hidden>Copy link</button>
+          <button class="btn btn--gold btn--block" id="share-btn" type="button" hidden>Share</button>
+          <button class="btn btn--ghost btn--block" id="copy-link" type="button" hidden>Copy link</button>
         </div>
 
         <span class="label">A message you can send</span>
         <p class="message" id="message"></p>
         <div class="actions">
-          <button class="ghost" id="copy-msg" type="button" hidden>Copy message</button>
+          <button class="btn btn--ghost btn--block" id="copy-msg" type="button" hidden>Copy message</button>
         </div>
 
         <p class="fine" id="share-fine"></p>
@@ -234,7 +193,7 @@
       <!-- The referrer, but the link has no handle we can use -->
       <div id="share-missing" class="center" hidden>
         <p class="eyebrow">Invite pros</p>
-        <h1>Invite pros to BookNStyle</h1>
+        <h1>Invite <em>pros</em> to BookNStyle</h1>
         <p class="sub" id="share-missing-text">We couldn't find your handle in this link. Open the BookNStyle app and go to Invite Clients: your handle is the last part of your booking link. Pros you invite enter it under Referred by when they sign up.</p>
       </div>
     </section>
@@ -267,6 +226,18 @@
   var RESERVED = ['book', 'app', 'admin', 'www', 'api', 'help', 'support', 'login', 'signup'];
 
   function $(id) { return document.getElementById(id); }
+
+  // The invited pro's title, with one part in the gold italic. Built as
+  // text (textContent), never as markup.
+  function setTitle(before, accent, after) {
+    var t = $('inv-title');
+    while (t.firstChild) t.removeChild(t.firstChild);
+    if (before) t.appendChild(document.createTextNode(before));
+    var em = document.createElement('em');
+    em.textContent = accent;
+    t.appendChild(em);
+    if (after) t.appendChild(document.createTextNode(after));
+  }
 
   // ---- Store badges (the same switch as web/site/main.js) ----
   var STORE_LABELS = { appStore: 'Download on the App Store', googlePlay: 'Get it on Google Play' };
@@ -373,7 +344,7 @@
     $('ref-missing').hidden = true;
     var who = name || ('@' + h);
     $('inv-eyebrow').textContent = "You're invited";
-    $('inv-title').textContent = who + ' invited you to BookNStyle';
+    setTitle('', who, ' invited you to BookNStyle');
     document.title = who + ' invited you to BookNStyle';
 
     var line = $('ref-line');
@@ -396,7 +367,7 @@
     $('invited').hidden = false;
     $('ref').hidden = true;
     $('inv-eyebrow').textContent = 'For beauty pros';
-    $('inv-title').textContent = 'Join BookNStyle as a pro';
+    setTitle('Join BookNStyle as a ', 'pro', '');
     document.title = 'Join BookNStyle as a pro';
     var note = $('ref-missing');
     if (notFound) {

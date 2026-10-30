@@ -9,12 +9,14 @@
 <meta name="referrer" content="no-referrer">
 <!--
   Nothing from any other host except the one call to BookNStyle's Supabase
-  project. The script is inline (this page is one self-contained file), and
-  it only ever writes text (textContent), never markup, so nothing on the
-  page can be turned into code.
+  project. The script is inline, and it only ever writes text (textContent),
+  never markup, so nothing on the page can be turned into code. The look
+  and its fonts come from this site (/assets/editorial.css,
+  /assets/webfonts/): style-src and font-src 'self'.
 -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self'; connect-src https://ebrxekhmlxlccuvcwiwb.supabase.co; form-action 'none'; base-uri 'none'">
-<meta name="theme-color" content="#1A1F36">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src https://ebrxekhmlxlccuvcwiwb.supabase.co; form-action 'none'; base-uri 'none'">
+<meta name="theme-color" content="#0A0B11">
+<meta name="color-scheme" content="dark">
 <link rel="icon" href="/img/mark.png">
 <!--
   https://app.booknstyle.com/owner/ : the confirm page for the one-click
@@ -54,84 +56,46 @@
   always opens in the browser, never in the app. Like every page on this
   site except /pro/, it must not link to the billing page
   (scripts/billing-guard.mjs).
+
+  The look: the website's (booknstyle.com), from /assets/editorial.css, the
+  same as the booking page (index.html). Dark only.
 -->
+<link rel="stylesheet" href="/assets/editorial.css">
 <style>
-  :root {
-    --bg: #FAFAF7; --surface: #FFFFFF; --muted-bg: #F4F1EA;
-    --ink: #1A1F36; --ink-soft: #3D4258; --muted: #6B6B7B; --muted-light: #A8A8B3;
-    --accent: #C8956A; --accent-soft: #F1E5D6;
-    --border: #EFEAE0; --hero: #1A1F36; --on-hero: #FFFFFF;
-    --button: #1A1F36; --on-button: #FFFFFF;
-    --ok: #2F6B45; --bad: #B3261E;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0E1018; --surface: #181B26; --muted-bg: #222530;
-      --ink: #F5F4EE; --ink-soft: #C7C6BD; --muted: #8E8F95; --muted-light: #5C5D66;
-      --accent-soft: #3A2E22; --border: #262936; --hero: #0A0B11; --on-hero: #F5F4EE;
-      --button: #C8956A; --on-button: #13141B;
-      --ok: #9BC4A8; --bad: #E5867A;
-    }
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; }
-  body {
-    background: var(--bg); color: var(--ink);
-    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  .hero {
-    background: var(--hero); color: var(--on-hero);
-    padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 88px;
-    text-align: center;
-  }
-  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
-  .brand img { width: 28px; height: auto; }
-  .brand span { font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
-  main { max-width: 480px; margin: -64px auto 0; padding: 0 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
-  .card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
-    padding: 28px 22px; box-shadow: 0 10px 30px rgba(26, 31, 54, 0.08);
-  }
-  .eyebrow {
-    font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
-    color: var(--accent); margin: 0 0 14px;
-  }
+  /* Only what this page has. The rest is /assets/editorial.css. */
+  .head { text-align: center; }
+  /* Done and not done: the eyebrow color tells them apart at a glance */
   .eyebrow.ok { color: var(--ok); }
-  .eyebrow.bad { color: var(--bad); }
-  h1 { font-size: 24px; line-height: 1.25; letter-spacing: -0.3px; margin: 0; }
-  .lines { margin: 14px 0 0; }
-  .lines p { margin: 0 0 10px; color: var(--ink-soft); overflow-wrap: anywhere; }
+  .eyebrow.bad { color: var(--danger); }
+  h1 { font-size: 32px; line-height: 1.12; }
+  .lines { margin: 20px 0 0; }
+  .lines p { margin: 0 0 10px; color: var(--text-2); overflow-wrap: anywhere; }
   .lines p:last-child { margin-bottom: 0; }
-  .go {
-    display: block; width: 100%; margin: 24px 0 0; padding: 14px 20px; border: 0; border-radius: 12px;
-    background: var(--button); color: var(--on-button); font: inherit; font-weight: 700; font-size: 16px;
-    cursor: pointer; appearance: none; -webkit-appearance: none;
-  }
-  .go:disabled { opacity: 0.6; cursor: default; }
-  .fine { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+  .card .btn { margin-top: 28px; }
+  .fine { margin: 24px 0 0; padding-top: 16px; border-top: 1px solid var(--line-soft); color: var(--text-3); font-size: 13px; overflow-wrap: anywhere; }
   .fine p { margin: 0 0 4px; }
-  footer { text-align: center; color: var(--muted-light); font-size: 12px; margin-top: 24px; }
-  footer a { color: inherit; }
-  [hidden] { display: none !important; }
+  @media (min-width: 560px) { h1 { font-size: 38px; } }
 </style>
 </head>
 <body>
-  <header class="hero">
+  <header class="top">
     <a class="brand" href="/">
       <img src="/img/mark.png" alt="">
       <span>BookNStyle</span>
+      <i></i>
     </a>
   </header>
 
   <main>
     <section class="card" aria-live="polite">
-      <p class="eyebrow" id="eyebrow">Owner action</p>
-      <h1 id="title">Open this link from the BookNStyle email</h1>
+      <div class="head">
+        <p class="eyebrow" id="eyebrow">Owner action</p>
+        <h1 id="title">Open this link from the BookNStyle email</h1>
+      </div>
       <div class="lines" id="lines">
         <p>This page needs JavaScript to work. If you opened the link from an email, try it again in your phone's or computer's web browser.</p>
       </div>
-      <button class="go" id="go" type="button" hidden></button>
+      <button class="btn btn--gold btn--block" id="go" type="button" hidden></button>
       <div class="fine" id="fine" hidden></div>
     </section>
 

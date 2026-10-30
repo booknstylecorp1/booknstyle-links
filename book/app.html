@@ -7,7 +7,8 @@
 <meta name="description" content="Open the BookNStyle app.">
 <meta name="robots" content="noindex">
 <meta name="apple-itunes-app" content="app-id=6813224710">
-<meta name="theme-color" content="#1A1F36">
+<meta name="theme-color" content="#0A0B11">
+<meta name="color-scheme" content="dark">
 <link rel="icon" href="/img/mark.png">
 <!--
   https://app.booknstyle.com/book/app: the "Open BookNStyle" button in our
@@ -28,78 +29,34 @@
 
   Like every page on this site except /pro/, it must not link to the billing
   page (scripts/billing-guard.mjs).
+
+  The look: the website's (booknstyle.com), from /assets/editorial.css, the
+  same as the booking page (index.html). Dark only.
 -->
+<link rel="stylesheet" href="/assets/editorial.css">
 <style>
-  :root {
-    --bg: #FAFAF7; --surface: #FFFFFF;
-    --ink: #1A1F36; --muted: #6B6B7B; --muted-light: #A8A8B3;
-    --accent: #C8956A; --border: #EFEAE0; --hero: #1A1F36; --on-hero: #FFFFFF;
-    --button: #1A1F36; --on-button: #FFFFFF;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0E1018; --surface: #181B26;
-      --ink: #F5F4EE; --muted: #8E8F95; --muted-light: #5C5D66;
-      --border: #262936; --hero: #0A0B11; --on-hero: #F5F4EE;
-      --button: #C8956A; --on-button: #13141B;
-    }
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; }
-  body {
-    background: var(--bg); color: var(--ink);
-    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  .hero {
-    background: var(--hero); color: var(--on-hero);
-    padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 88px;
-    text-align: center;
-  }
-  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
-  .brand img { width: 28px; height: auto; }
-  .brand span { font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
-  main { max-width: 480px; margin: -64px auto 0; padding: 0 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
-  .card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
-    padding: 28px 22px; box-shadow: 0 10px 30px rgba(26, 31, 54, 0.08); text-align: center;
-  }
-  .eyebrow {
-    font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
-    color: var(--accent); margin: 0 0 14px;
-  }
-  h1 { font-size: 26px; line-height: 1.2; letter-spacing: -0.3px; margin: 0; }
-  .sub { color: var(--muted); margin: 6px 0 0; font-size: 15px; }
-  .open {
-    display: block; margin: 24px 0 0; padding: 14px 20px; border-radius: 12px;
-    background: var(--button); color: var(--on-button); text-decoration: none;
-    font-weight: 700; font-size: 16px;
-  }
-  .note { color: var(--muted); font-size: 14px; margin: 24px 0 0; }
-  .stores { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 12px; }
-  .stores a { display: block; line-height: 0; }
-  .stores .apple img { height: 52px; width: auto; }
-  /* Google's badge carries its own padding, so it's drawn larger to match. */
-  .stores .google img { height: 77px; width: auto; margin: -12px 0; }
-  footer { text-align: center; color: var(--muted-light); font-size: 12px; margin-top: 24px; }
-  footer a { color: inherit; }
-  [hidden] { display: none !important; }
+  /* Only what this page has: the Open BookNStyle button, then the stores. */
+  .card .btn { margin-top: 28px; }
+  .note { color: var(--text-3); font-size: 14px; margin: 28px 0 0; }
+  .note:not([hidden]) + .stores { margin-top: 14px; }
 </style>
 </head>
 <body>
-  <header class="hero">
+  <header class="top">
     <a class="brand" href="/">
       <img src="/img/mark.png" alt="">
       <span>BookNStyle</span>
+      <i></i>
     </a>
   </header>
 
   <main>
-    <section class="card">
+    <section class="card center">
       <p class="eyebrow">BookNStyle</p>
-      <h1 id="title">Open the app</h1>
+      <h1 id="title">Open the <em>app</em></h1>
       <p class="sub" id="sub">Your bookings, schedule and messages are in the BookNStyle app.</p>
-      <a class="open" id="open" href="booknstyle://">Open BookNStyle</a>
+      <a class="btn btn--gold" id="open" href="booknstyle://">Open BookNStyle
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
 
       <p class="note" id="note">Don't have the app on this phone?</p>
       <div class="stores" id="stores">
@@ -129,7 +86,12 @@
   if (!isPhone) {
     // A computer can't open the phone app: say so, and show the stores.
     document.getElementById('open').hidden = true;
-    document.getElementById('title').textContent = 'BookNStyle is a phone app';
+    // "phone app" in the gold italic, like "app" above (built as text).
+    var title = document.getElementById('title');
+    title.textContent = 'BookNStyle is a ';
+    var accent = document.createElement('em');
+    accent.textContent = 'phone app';
+    title.appendChild(accent);
     document.getElementById('sub').textContent =
       'Open this email on your phone to go straight to the app, or get it here:';
     document.getElementById('note').hidden = true;
