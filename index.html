@@ -31,6 +31,12 @@
   the app. It can only call what the anon role may call; here that's the
   get_pro_invite_card function (migration 031, which also accepts a pro's
   old handle for 90 days after they change it — migration 040).
+
+  STORE BADGES: STORE_LINKS in the script below, empty until the apps are
+  live (the same switch as join/ and get/). Empty: the badges are faded
+  images, not links, under "Coming soon on iPhone and Android", and the
+  page offers the waitlist instead of the app. LAUNCH DAY: fill both URLs
+  (RUNBOOK step 8), then copy this file over 404.html.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -133,6 +139,10 @@
   .stores .apple img { height: 52px; width: auto; }
   /* Google's badge carries its own padding, so it's drawn larger to match. */
   .stores .google img { height: 77px; width: auto; margin: -12px 0; }
+  /* Before launch: the website's faded "soon" badges, not links */
+  .stores span { display: block; line-height: 0; opacity: .55; filter: grayscale(.2); }
+  .soon { margin: 28px 0 0; text-align: center; color: var(--text-3); font-size: 13px; font-weight: 500; }
+  .soon:not([hidden]) + .stores { margin-top: 12px; }
   .perks { color: var(--text-3); font-size: 14px; margin: 22px 0 0; text-align: center; }
   /* A held waitlist name: the website's gold button. */
   .join {
@@ -195,21 +205,22 @@
 
       <!-- No handle, one we don't know, or a name held on the waitlist -->
       <div id="generic" class="center" hidden>
-        <p class="eyebrow" id="generic-eyebrow">BookNStyle</p>
+        <p class="eyebrow" id="generic-eyebrow">Launching soon</p>
         <h1 id="generic-title">Book beauty pros <em>near you</em></h1>
-        <p class="sub" id="generic-sub">Hair, nails, barbers, lashes and more. Book in a few taps.</p>
-        <a class="join" id="held-join" href="https://booknstyle.com/waitlist/" hidden>Join the list
+        <p class="sub" id="generic-sub">Hair, nails, barbers, lashes and more, across the US. Join the list and we'll email you the day BookNStyle launches.</p>
+        <a class="join" id="held-join" href="https://booknstyle.com/waitlist/?role=client&amp;utm_source=app_site" hidden>Join the list
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
         <p class="note" id="held-note" hidden>Launching soon across the US.</p>
       </div>
 
+      <p class="soon" id="soon" hidden>Coming soon on iPhone and Android</p>
       <div class="stores" id="stores" hidden>
-        <a class="apple" id="apple" href="https://apps.apple.com/app/id6813224710" rel="noopener">
-          <img src="/img/app-store.png" alt="Download on the App Store">
-        </a>
-        <a class="google" id="google" href="https://play.google.com/store/apps/details?id=com.booknstyle.app" rel="noopener">
-          <img src="/img/google-play.png" alt="Get it on Google Play">
-        </a>
+        <span class="apple" id="apple" data-store="appStore" role="img" aria-label="App Store, coming soon">
+          <img src="/img/app-store.png" alt="">
+        </span>
+        <span class="google" id="google" data-store="googlePlay" role="img" aria-label="Google Play, coming soon">
+          <img src="/img/google-play.png" alt="">
+        </span>
       </div>
       <p class="perks" id="perks" hidden>Reminders before every appointment. Your first reschedule is free.</p>
     </section>
@@ -225,6 +236,15 @@
 (function () {
   'use strict';
 
+  // STORE LINKS: empty until the apps are live; fill both on launch day
+  // (RUNBOOK step 8), the same two URLs as join/ and get/. Empty: the
+  // badges are faded images under "Coming soon" and the page offers the
+  // waitlist. Filled: the page is as before, with the badges as links.
+  var STORE_LINKS = {
+    appStore: '',
+    googlePlay: ''
+  };
+
   var SUPABASE_URL = 'https://ebrxekhmlxlccuvcwiwb.supabase.co';
   var SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_Vc4MPxSdXx1FmL3562bLUQ_A_KwQeVe';
   // Same rule as the app and the database.
@@ -234,10 +254,32 @@
   function show(id) { $(id).hidden = false; }
   function hide(id) { $(id).hidden = true; }
 
-  // Put the store for this phone first.
+  function storeLink(key) {
+    var url = String(STORE_LINKS[key] || '').trim();
+    return /^https:\/\//i.test(url) ? url : '';
+  }
+  var LIVE = !!(storeLink('appStore') && storeLink('googlePlay'));
+
+  // Put the store for this phone first; the badges become links once live.
+  var STORE_LABELS = { appStore: 'Download on the App Store', googlePlay: 'Get it on Google Play' };
   var ua = navigator.userAgent || '';
   if (/android/i.test(ua)) {
     $('stores').insertBefore($('google'), $('apple'));
+  }
+  var badges = $('stores').querySelectorAll('[data-store]');
+  for (var b = 0; b < badges.length; b++) {
+    var badge = badges[b];
+    var key = badge.getAttribute('data-store');
+    var url = storeLink(key);
+    if (!url) continue;
+    var a = document.createElement('a');
+    a.className = badge.className;
+    a.id = badge.id;
+    a.href = url;
+    a.rel = 'noopener';
+    var img = badge.querySelector('img');
+    if (img) { img.alt = STORE_LABELS[key]; a.appendChild(img); }
+    badge.parentNode.replaceChild(a, badge);
   }
 
   function price(cents) {
@@ -258,15 +300,26 @@
 
   function finish() {
     hide('loading');
+    if (!LIVE) show('soon');
     show('stores');
     show('perks');
   }
 
+  // Before launch: the waitlist button (utm_source=app_site, set in the
+  // HTML). Once live: the store badges below, as before.
   function showGeneric(notFound) {
+    if (LIVE) {
+      $('generic-eyebrow').textContent = 'BookNStyle';
+      $('generic-sub').textContent = 'Hair, nails, barbers, lashes and more. Book in a few taps.';
+    } else {
+      show('held-join');
+    }
     if (notFound) {
       $('generic-eyebrow').textContent = 'Link not found';
       $('generic-title').textContent = "We couldn't find that pro";
-      $('generic-sub').textContent = 'Check the link with your pro, or get the app and search for them.';
+      $('generic-sub').textContent = LIVE
+        ? 'Check the link with your pro, or get the app and search for them.'
+        : "Check the link with your pro, or join the list and we'll email you the day BookNStyle launches.";
     }
     show('generic');
     finish();
@@ -413,7 +466,7 @@
         });
     })
     .catch(function () {
-      // Offline or the server is down: still let them get the app.
+      // Offline or the server is down: still give them something to do.
       showGeneric(false);
     });
 })();

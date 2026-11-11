@@ -32,6 +32,12 @@
 
   The look: the website's (booknstyle.com), from /assets/editorial.css, the
   same as the booking page (index.html). Dark only.
+
+  Store badges: STORE_LINKS below, empty until the apps are live (the same
+  switch as index.html, join/ and get/; fill on launch day, RUNBOOK step 8).
+  Empty: faded badges under "Coming soon on iPhone and Android", not links
+  to store pages that aren't released yet, and on a computer the page
+  doesn't point to them.
 -->
 <link rel="stylesheet" href="/assets/editorial.css">
 <style>
@@ -39,6 +45,8 @@
   .card .btn { margin-top: 28px; }
   .note { color: var(--text-3); font-size: 14px; margin: 28px 0 0; }
   .note:not([hidden]) + .stores { margin-top: 14px; }
+  /* Before launch: the website's faded "soon" badges, not links */
+  .stores span { opacity: .55; filter: grayscale(.2); }
 </style>
 </head>
 <body>
@@ -60,12 +68,12 @@
 
       <p class="note" id="note">Don't have the app on this phone?</p>
       <div class="stores" id="stores">
-        <a class="apple" id="apple" href="https://apps.apple.com/app/id6813224710" rel="noopener">
-          <img src="/img/app-store.png" alt="Download on the App Store">
-        </a>
-        <a class="google" id="google" href="https://play.google.com/store/apps/details?id=com.booknstyle.app" rel="noopener">
-          <img src="/img/google-play.png" alt="Get it on Google Play">
-        </a>
+        <span class="apple" id="apple" data-store="appStore" role="img" aria-label="App Store, coming soon">
+          <img src="/img/app-store.png" alt="">
+        </span>
+        <span class="google" id="google" data-store="googlePlay" role="img" aria-label="Google Play, coming soon">
+          <img src="/img/google-play.png" alt="">
+        </span>
       </div>
     </section>
 
@@ -79,12 +87,47 @@
 <script>
 (function () {
   'use strict';
+
+  // STORE LINKS: empty until the apps are live; fill both on launch day
+  // (RUNBOOK step 8), the same two URLs as index.html, join/ and get/.
+  // Empty: faded badges under "Coming soon".
+  var STORE_LINKS = {
+    appStore: '',
+    googlePlay: ''
+  };
+  var STORE_LABELS = { appStore: 'Download on the App Store', googlePlay: 'Get it on Google Play' };
+  function storeLink(key) {
+    var url = String(STORE_LINKS[key] || '').trim();
+    return /^https:\/\//i.test(url) ? url : '';
+  }
+  var live = !!(storeLink('appStore') && storeLink('googlePlay'));
+
   var ua = navigator.userAgent || '';
   // iPadOS Safari says "Macintosh"; a touch screen tells it apart from a Mac.
   var isIPad = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
   var isPhone = /iPhone|iPod|iPad|Android/i.test(ua) || isIPad;
+
+  // Put the store for this phone first, and make the badges links once live.
+  var stores = document.getElementById('stores');
+  if (/android/i.test(ua)) stores.insertBefore(document.getElementById('google'), document.getElementById('apple'));
+  var badges = stores.querySelectorAll('[data-store]');
+  for (var b = 0; b < badges.length; b++) {
+    var badge = badges[b];
+    var key = badge.getAttribute('data-store');
+    var url = storeLink(key);
+    if (!url) continue;
+    var a = document.createElement('a');
+    a.className = badge.className;
+    a.id = badge.id;
+    a.href = url;
+    a.rel = 'noopener';
+    var img = badge.querySelector('img');
+    if (img) { img.alt = STORE_LABELS[key]; a.appendChild(img); }
+    badge.parentNode.replaceChild(a, badge);
+  }
+  if (!live) document.getElementById('note').textContent = 'Coming soon on iPhone and Android';
   if (!isPhone) {
-    // A computer can't open the phone app: say so, and show the stores.
+    // A computer can't open the phone app: say so, and (once live) show the stores.
     document.getElementById('open').hidden = true;
     // "phone app" in the gold italic, like "app" above (built as text).
     var title = document.getElementById('title');
@@ -92,9 +135,11 @@
     var accent = document.createElement('em');
     accent.textContent = 'phone app';
     title.appendChild(accent);
-    document.getElementById('sub').textContent =
-      'Open this email on your phone to go straight to the app, or get it here:';
-    document.getElementById('note').hidden = true;
+    document.getElementById('sub').textContent = live
+      ? 'Open this email on your phone to go straight to the app, or get it here:'
+      : 'Open this email on your phone to go straight to the app.';
+    // Before launch the note stays: "Coming soon on iPhone and Android".
+    if (live) document.getElementById('note').hidden = true;
     return;
   }
   if (/android/i.test(ua)) {
@@ -102,9 +147,6 @@
     // when it isn't installed. An empty path opens the app's home screen.
     document.getElementById('open').href =
       'intent://#Intent;scheme=booknstyle;package=com.booknstyle.app;end';
-    // Put the store for this phone first.
-    var stores = document.getElementById('stores');
-    stores.insertBefore(document.getElementById('google'), document.getElementById('apple'));
   }
 })();
 </script>

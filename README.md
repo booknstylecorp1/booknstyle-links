@@ -3,6 +3,7 @@
 Pro invite links for BookNStyle: `https://app.booknstyle.com/book/<handle>`.
 
 - `index.html` / `404.html` — the invite page (identical files; GitHub Pages serves `404.html` for any path it doesn't have).
+  Its store badges, and those on `book/app.html` (the "Open BookNStyle" page from the emails), stay "Coming soon" until `STORE_LINKS` in each page is filled on launch day, with the same two URLs as `join/` and `get/` (RUNBOOK step 8; then copy `index.html` over `404.html`).
 - `.well-known/` — iOS Universal Links and Android App Links verification.
 - `scripts/generate.mjs` — builds a page and a 1200×630 link-preview image for every pro from the BookNStyle database (public data only).
   A pro who changes their handle keeps the old one for 90 days: the generator also writes a redirect page at each old `/book/<handle>`, with the pro's preview tags.
