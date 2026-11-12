@@ -170,6 +170,39 @@
     .card { padding: 44px 40px 36px; }
     h1 { font-size: 42px; }
   }
+  /* Very narrow windows (a phone zoomed to 200% and up): slimmer margins,
+     and the headline, eyebrow, buttons and badges shrink to fit, so nothing
+     runs off the side or breaks inside a word. No change at 150% zoom or wider. */
+  @media (max-width: 239px) {
+    .top { padding-left: 8px; padding-right: 8px; }
+    main { padding-left: 12px; padding-right: 12px; }
+    .card { padding-left: 12px; padding-right: 12px; }
+    .eyebrow { max-width: 100%; gap: 8px; letter-spacing: .16em; text-wrap: balance; }
+    .eyebrow::before, .eyebrow::after { flex: 0 1 14px; min-width: 0; }
+    h1 { font-size: 13vw; }
+    .join, .copy { max-width: 100%; }
+    .join { padding: 6px 12px; font-size: 15px; }
+    .join svg { display: none; }
+    .stores > * { max-width: 100%; }
+    .stores img { max-width: 100%; }
+    .stores .apple img { height: auto; width: min(156px, calc((100vw - 50px) * .784)); }
+    .stores .google img { height: auto; width: min(199px, calc(100vw - 50px)); margin: max(-12px, calc((100vw - 50px) * -.06)) 0; }
+  }
+  @media (max-width: 159px) {
+    .brand span { font-size: 11px; letter-spacing: .3em; margin-right: -.3em; }
+    main { padding-left: 6px; padding-right: 6px; }
+    .card { padding-left: 8px; padding-right: 8px; border-radius: 22px; }
+    .eyebrow { font-size: 11px; letter-spacing: .12em; }
+    .eyebrow::before, .eyebrow::after { display: none; }
+    .avatar { width: 84px; height: 84px; }
+    .initials { font-size: 32px; }
+    .join { padding: 6px 8px; font-size: 14px; }
+    .copy { width: 100%; padding: 9px 8px; }
+    .steps { padding: 16px 10px; }
+    .services li { flex-wrap: wrap; row-gap: 2px; }
+    .stores .apple img { width: min(156px, calc((100vw - 30px) * .784)); }
+    .stores .google img { width: min(199px, calc(100vw - 30px)); margin: max(-12px, calc((100vw - 30px) * -.06)) 0; }
+  }
 </style>
 </head>
 <body>
