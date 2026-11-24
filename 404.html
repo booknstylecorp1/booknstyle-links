@@ -228,6 +228,7 @@
           <h1 id="pro-name"></h1>
           <p class="sub" id="pro-business" hidden></p>
           <p class="sub" id="pro-location" hidden></p>
+          <p class="sub" id="pro-license" hidden></p>
         </div>
         <ul class="services" id="services" hidden></ul>
         <div class="steps center">
@@ -413,6 +414,14 @@
       $('pro-location').textContent = place;
       show('pro-location');
     }
+    // A massage pro's license (All-States plan P13, migration 112): state law
+    // requires the number in massage advertising. The same words as
+    // scripts/licenses.mjs and the app.
+    var licenseText = cardLicenseLines(card).join('. ');
+    if (licenseText) {
+      $('pro-license').textContent = licenseText;
+      show('pro-license');
+    }
 
     var list = $('services');
     (card.services || []).forEach(function (s) {
@@ -459,6 +468,68 @@
 
     show('pro');
     finish();
+  }
+
+  // ---- The massage license line (P13). Kept word for word with
+  // scripts/licenses.mjs (scripts/tests/all-states-app.test.ts compares).
+  function licClean(v) { return String(v == null ? '' : v).replace(/\s+/g, ' ').trim(); }
+  function massageLicenseLine(l) {
+    if (!l) return null;
+    var num = licClean(l.credential_number);
+    if (!num) return null;
+    var st = licClean(l.state_code != null ? l.state_code : l.state).toUpperCase();
+    var body = licClean(l.issuing_body);
+    switch (l.credential_type) {
+      case 'state_license':
+        return st ? 'Licensed massage therapist, ' + st + ' license ' + num : 'Licensed massage therapist, license ' + num;
+      case 'state_registration':
+        return st ? 'Registered massage therapist, ' + st + ' registration ' + num : 'Registered massage therapist, registration ' + num;
+      case 'local_permit':
+        return body ? 'Massage permit ' + num + ', ' + body : 'Massage permit ' + num;
+      case 'camtc':
+        return 'CAMTC certified massage therapist, certificate ' + num;
+      case 'national_cert':
+        return 'Nationally certified massage therapist (NCBTMB), certificate ' + num;
+      case 'mblex':
+        return 'Massage therapist, MBLEx ' + num;
+      case 'school_certificate':
+        return body ? 'Massage school certificate ' + num + ', ' + body : 'Massage school certificate ' + num;
+      default:
+        return body ? 'Massage credential ' + num + ', ' + body : 'Massage credential ' + num;
+    }
+  }
+  function establishmentLine(l) {
+    var num = licClean(l && l.establishment_license_number);
+    if (!l || !num) return null;
+    var parts = ['Establishment license ' + num];
+    if (licClean(l.establishment_address)) parts.push(licClean(l.establishment_address));
+    if (licClean(l.establishment_phone)) parts.push(licClean(l.establishment_phone));
+    return parts.join(', ');
+  }
+  function cardLicenseLines(card) {
+    var list = (card && Array.isArray(card.licenses) ? card.licenses : []).filter(function (l) {
+      return l && l.category === 'massage' && licClean(l.credential_number);
+    });
+    function stateOf(l) { return licClean(l.state_code != null ? l.state_code : l.state).toUpperCase(); }
+    var seen = {};
+    var picks = [];
+    var st = licClean(card && card.state).toUpperCase();
+    var i;
+    for (i = 0; i < list.length; i++) {
+      if (st && stateOf(list[i]) === st) { picks.push(list[i]); seen[st] = true; break; }
+    }
+    for (i = 0; i < list.length; i++) {
+      var k = stateOf(list[i]);
+      if (!Object.prototype.hasOwnProperty.call(seen, k)) { seen[k] = true; picks.push(list[i]); }
+    }
+    var out = [];
+    for (i = 0; i < picks.length; i++) {
+      var a = massageLicenseLine(picks[i]);
+      var e = establishmentLine(picks[i]);
+      if (a) out.push(a);
+      if (e) out.push(e);
+    }
+    return out;
   }
 
   function initialsBadge(name) {

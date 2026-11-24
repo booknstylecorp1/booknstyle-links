@@ -29,6 +29,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import zlib from 'node:zlib';
 import { assertNoLinksToBilling } from './billing-guard.mjs';
+import { cardLicenseLines } from './licenses.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, '_site');
@@ -455,6 +456,9 @@ function proTags(card) {
   const title = `Book with ${name} on BookNStyle`;
   const description = [
     [card.business_name && card.business_name !== name ? card.business_name : null, place].filter(Boolean).join(' · '),
+    // A massage pro's license (All-States plan P13, migration 112): state law
+    // requires the number in massage advertising, and a link preview is one.
+    ...cardLicenseLines(card),
     top,
     'Reminders before every appointment, and your first reschedule is free.',
   ].filter(Boolean).join('. ');

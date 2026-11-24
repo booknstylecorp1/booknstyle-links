@@ -8,12 +8,15 @@
 <meta name="robots" content="noindex">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <!--
-  Only this origin, the pinned supabase-js file on jsDelivr (checked by its
-  hash below), and BookNStyle's Supabase project. No inline scripts, no
-  trackers, no other hosts.
+  Only this origin, the pinned supabase-js file on jsDelivr (that exact
+  file, not the rest of jsDelivr, and checked by its hash below; when you
+  upgrade it, change the address here too), and BookNStyle's Supabase project. No inline scripts, no
+  trackers, no other hosts. The look and its fonts come from this origin
+  too (/assets/editorial.css, /assets/webfonts/): font-src 'self'.
 -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://ebrxekhmlxlccuvcwiwb.supabase.co; form-action 'self'; base-uri 'none'">
-<meta name="theme-color" content="#16182B">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.3/dist/umd/supabase.js; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src https://ebrxekhmlxlccuvcwiwb.supabase.co; form-action 'self'; base-uri 'none'">
+<meta name="theme-color" content="#0A0B11">
+<meta name="color-scheme" content="dark">
 <link rel="icon" href="/img/mark.png">
 <!--
   BookNStyle Pro billing page: https://app.booknstyle.com/pro/
@@ -35,132 +38,127 @@
   on the caller's own account.
 
   Supabase Auth settings this page needs are listed in README.md here.
+
+  The look: the website's (booknstyle.com), from /assets/editorial.css, the
+  same as the booking page (index.html). Dark only. Restyled Oct 29 2026:
+  only the look changed; every word, state and step is as it was.
+  Oct 30 2026 (owner, M4): the plan pitch no longer says who pays the
+  booking fee; it leads with what the plan gives the pro.
 -->
+<link rel="stylesheet" href="/assets/editorial.css">
 <style>
-  :root {
-    --bg: #FAFAF7; --surface: #FFFFFF; --muted-bg: #F4F1EA;
-    --ink: #16182B; --ink-soft: #3D4258; --muted: #6B6B7B;
-    --accent: #C8956A; --accent-text: #8A5F3C; --accent-soft: #F1E5D6;
-    --border: #EFEAE0; --border-strong: #DDD6C5;
-    --hero: #16182B; --on-hero: #FFFFFF;
-    --button: #16182B; --on-button: #FFFFFF;
-    --danger: #B3261E; --danger-soft: #FBEAE8; --ok-soft: #EAF3EC; --ok: #2F6B45;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0E1018; --surface: #181B26; --muted-bg: #222530;
-      --ink: #F5F4EE; --ink-soft: #C7C6BD; --muted: #8E8F95;
-      --accent-text: #C8956A; --accent-soft: #3A2E22;
-      --border: #262936; --border-strong: #353949;
-      --hero: #0A0B11; --on-hero: #F5F4EE;
-      --button: #C8956A; --on-button: #13141B;
-      --danger: #E5867A; --danger-soft: #3A2220; --ok-soft: #1E3326; --ok: #9BC4A8;
-    }
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; }
-  body {
-    background: var(--bg); color: var(--ink);
-    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  .hero {
-    background: var(--hero); color: var(--on-hero);
-    padding: calc(22px + env(safe-area-inset-top, 0px)) 20px 88px;
-    text-align: center;
-  }
-  .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
-  .brand img { width: 28px; height: auto; }
-  .brand span { font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
-  main { max-width: 520px; margin: -64px auto 0; padding: 0 16px calc(40px + env(safe-area-inset-bottom, 0px)); }
-  .card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
-    padding: 28px 22px; box-shadow: 0 10px 30px rgba(22, 24, 43, 0.08);
-  }
-  .center { text-align: center; }
-  .eyebrow {
-    font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
-    color: var(--accent-text); margin: 0 0 10px;
-  }
-  h1 { font-size: 26px; line-height: 1.2; letter-spacing: -0.3px; margin: 0; }
-  h1:focus { outline: none; }
-  h2 { font-size: 18px; margin: 0 0 6px; }
-  p { margin: 0; }
-  .sub { color: var(--muted); margin: 8px 0 0; font-size: 15px; }
+  /* Only what this page has. The rest is /assets/editorial.css. */
+  main { max-width: 520px; }
+  .sub { margin-top: 10px; }
   .stack > * + * { margin-top: 14px; }
-  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+
+  /* While the page starts: a quiet placeholder of the card (the owner's rule: no spinners) */
+  .loading { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 4px 0 6px; }
+  .ph { background: rgba(245, 244, 238, .07); border-radius: 999px; }
+  .ph--eyebrow { width: 34%; height: 12px; }
+  .ph--title { width: 60%; height: 34px; margin-bottom: 10px; }
+  .ph--field { width: 100%; height: 52px; border-radius: 14px; }
+  .ph--button { width: 100%; height: 56px; }
+
+  /* Fields: the waitlist's navy boxes */
+  label { display: block; font-size: 13px; font-weight: 500; letter-spacing: .01em; color: var(--text-2); margin-bottom: 8px; }
   input[type="email"], input[type="password"], input[type="text"] {
-    width: 100%; font: inherit; font-size: 16px; color: var(--ink); background: var(--surface);
-    border: 1px solid var(--border-strong); border-radius: 12px; padding: 12px 14px;
+    width: 100%; min-height: 52px; padding: 0 16px; border-radius: 14px;
+    font: 400 16px/1.4 var(--sans); color: var(--text);
+    background: var(--field); border: 1px solid var(--field-line);
+    -webkit-appearance: none; appearance: none;
+    transition: border-color .3s, box-shadow .3s, background-color .3s;
   }
-  input:focus-visible, button:focus-visible, a:focus-visible, .plan:focus-within {
-    outline: 3px solid var(--accent); outline-offset: 2px;
+  input:hover { border-color: rgba(223, 185, 144, .38); }
+  input:focus { outline: none; border-color: var(--champ-l); box-shadow: 0 0 0 4px rgba(200, 149, 106, .2); background-color: rgba(10, 11, 17, .78); }
+  /* A browser's saved email or password keeps the navy box */
+  input:-webkit-autofill, input:-webkit-autofill:hover {
+    -webkit-text-fill-color: var(--text); caret-color: var(--text);
+    -webkit-box-shadow: 0 0 0 1000px #121426 inset; box-shadow: 0 0 0 1000px #121426 inset;
+  }
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text);
+    -webkit-box-shadow: 0 0 0 1000px #121426 inset, 0 0 0 4px rgba(200, 149, 106, .2);
+    box-shadow: 0 0 0 1000px #121426 inset, 0 0 0 4px rgba(200, 149, 106, .2);
   }
   .code-input { letter-spacing: 6px; font-size: 22px !important; text-align: center; font-variant-numeric: tabular-nums; }
-  .btn {
-    display: block; width: 100%; appearance: none; border: 0; cursor: pointer; text-align: center;
-    font: inherit; font-size: 16px; font-weight: 700; text-decoration: none;
-    background: var(--button); color: var(--on-button); border-radius: 12px; padding: 14px 18px;
-  }
-  .btn[disabled] { opacity: 0.6; cursor: default; }
-  .btn-secondary {
-    background: transparent; color: var(--ink); border: 1px solid var(--border-strong); font-weight: 600;
-  }
+
+  /* Text buttons (a different email, Sign out) */
   .link {
-    appearance: none; background: none; border: 0; padding: 4px 0; cursor: pointer;
-    font: inherit; font-size: 15px; font-weight: 600; color: var(--accent-text); text-decoration: underline;
+    -webkit-appearance: none; appearance: none; background: none; border: 0; padding: 4px 0; cursor: pointer;
+    font: 600 14px/1.4 var(--sans); color: var(--champ-l);
+    text-decoration: underline; text-decoration-color: rgba(223, 185, 144, .4); text-underline-offset: 3px;
   }
-  .hint { font-size: 13px; color: var(--muted); }
-  .divider { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; margin: 20px 0; }
-  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
-  .notice { border-radius: 12px; padding: 12px 14px; font-size: 15px; }
-  .notice.error { background: var(--danger-soft); color: var(--danger); }
-  .notice.ok { background: var(--ok-soft); color: var(--ok); }
-  .notice.info { background: var(--muted-bg); color: var(--ink-soft); }
-  fieldset { border: 0; margin: 0; padding: 0; }
-  legend { font-size: 14px; font-weight: 600; margin-bottom: 8px; padding: 0; }
+  .link:hover { text-decoration-color: currentColor; }
+  .hint { font-size: 13px; color: var(--text-3); }
+  .divider {
+    display: flex; align-items: center; gap: 14px; margin: 24px 0;
+    color: var(--text-3); font-size: 12px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase;
+  }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  /* Messages */
+  .notice { border-radius: 14px; padding: 12px 14px; font-size: 15px; line-height: 1.5; border: 1px solid transparent; }
+  .notice.error { background: rgba(242, 167, 160, .08); border-color: rgba(242, 167, 160, .35); color: var(--danger); }
+  .notice.ok { background: rgba(200, 149, 106, .12); border-color: rgba(223, 185, 144, .42); color: var(--text); }
+  .notice.info { background: rgba(245, 244, 238, .04); border-color: var(--line-soft); color: var(--text-2); }
+
+  /* Choosing a plan: the waitlist's choice cards */
+  fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+  legend { font-size: 13px; font-weight: 500; letter-spacing: .01em; color: var(--text-2); margin-bottom: 10px; padding: 0; }
   .plans { display: grid; gap: 12px; }
   .plan {
-    display: block; position: relative; cursor: pointer; font-weight: 400; margin: 0;
-    border: 2px solid var(--border); border-radius: 16px; padding: 16px; background: var(--surface);
+    display: block; position: relative; cursor: pointer; margin: 0;
+    font-size: 16px; font-weight: 400; letter-spacing: 0; color: var(--text);
+    border: 1px solid rgba(245, 244, 238, .12); border-radius: 20px; padding: 18px 18px 16px;
+    background: rgba(245, 244, 238, .03);
+    transition: border-color .3s, background-color .3s, box-shadow .3s;
   }
+  .plan:hover { border-color: rgba(223, 185, 144, .42); }
   .plan input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-  .plan.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .plan.selected {
+    border-color: var(--champ-l);
+    background: linear-gradient(160deg, rgba(200, 149, 106, .22), rgba(200, 149, 106, .05));
+    box-shadow: inset 0 0 0 1px rgba(223, 185, 144, .35);
+  }
+  .plan:focus-within { outline: 2px solid var(--champ-l); outline-offset: 3px; }
+  .plan:focus-within:not(:has(input:focus-visible)) { outline: none; }
   .plan-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .plan-name { font-size: 17px; font-weight: 700; }
-  .pill {
-    font-size: 12px; font-weight: 700; letter-spacing: 0.3px; border-radius: 999px; padding: 3px 10px;
-    background: var(--accent); color: #13141B;
-  }
-  .price { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; margin-top: 6px; }
-  .price small { font-size: 15px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
-  .plan-note { font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .fine { font-size: 13px; color: var(--muted); text-align: center; }
+  .plan-name { font-size: 16px; font-weight: 600; letter-spacing: .01em; }
+  .pill { font-size: 12px; font-weight: 600; letter-spacing: .02em; border-radius: 999px; padding: 4px 11px; background: var(--grad-gold); color: var(--ink-text); }
+  .price { font-family: var(--serif); font-weight: 400; font-size: 40px; line-height: 1.05; letter-spacing: -.02em; margin-top: 10px; }
+  .price small { font-family: var(--sans); font-size: 15px; font-weight: 400; letter-spacing: 0; color: var(--text-3); }
+  .plan-note { font-size: 13px; color: var(--text-3); margin-top: 6px; }
+  /* On the gold-tinted chosen card, the 56% gray drops just under 4.5:1 */
+  .plan.selected .plan-note, .plan.selected .price small { color: var(--text-2); }
+  .fine { font-size: 13px; color: var(--text-3); text-align: center; }
+  .trust { color: var(--text-2); margin-top: 2px; }
+
+  /* The plan a pro has */
   .status-badge {
-    display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.3px; border-radius: 999px;
-    padding: 4px 12px; background: var(--ink); color: var(--surface);
+    display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+    border-radius: 999px; padding: 5px 12px; background: var(--grad-gold); color: var(--ink-text);
   }
-  .status-badge.warn { background: var(--danger); color: #FFFFFF; }
-  .rows { border-top: 1px solid var(--border); margin-top: 16px; }
-  .rows div { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
-  .rows dt { color: var(--muted); }
-  .rows dd { margin: 0; font-weight: 600; text-align: right; }
-  .benefits { list-style: none; margin: 0; padding: 0; font-size: 14px; color: var(--ink-soft); }
-  .benefits li { padding: 4px 0 4px 24px; position: relative; }
-  .benefits li::before { content: "✓"; position: absolute; left: 0; color: var(--accent-text); font-weight: 700; }
-  .loading { display: flex; justify-content: center; padding: 36px 0; }
-  .spinner {
-    width: 28px; height: 28px; border-radius: 50%;
-    border: 3px solid var(--border); border-top-color: var(--accent);
-    animation: spin 0.8s linear infinite;
+  .status-badge.warn { background: rgba(242, 167, 160, .12); color: var(--danger); box-shadow: inset 0 0 0 1px rgba(242, 167, 160, .4); }
+  .rows { border-top: 1px solid var(--line); margin: 16px 0 0; }
+  .rows div { display: flex; justify-content: space-between; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line-soft); font-size: 15px; }
+  .rows dt { color: var(--text-3); }
+  .rows dd { margin: 0; font-weight: 600; text-align: right; color: var(--text); }
+  .benefits { list-style: none; margin: 22px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line-soft); font-size: 14px; color: var(--text-2); }
+  .benefits li { position: relative; padding: 5px 0 5px 26px; }
+  .benefits li::before {
+    content: ""; position: absolute; left: 3px; top: 12px; width: 10px; height: 5px;
+    border-left: 1.6px solid var(--champ-l); border-bottom: 1.6px solid var(--champ-l); transform: rotate(-45deg);
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
-  .who { font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .who {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line-soft); font-size: 14px; color: var(--text-3);
+  }
   .who span { overflow-wrap: anywhere; }
-  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 24px; }
-  footer a { color: inherit; }
-  [hidden] { display: none !important; }
+  .who strong { color: var(--text); font-weight: 600; }
+
+  /* Back from Stripe, from the iPhone app */
+  #view-return .btn { margin-top: 26px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.3/dist/umd/supabase.js"
         integrity="sha384-wUhGjm8yom7j8IkWM5ZzIdOO/62dez3WNulthrcTYBqGaTi9lWhKKCnVtcxT2CEI"
@@ -168,23 +166,28 @@
 <script src="/pro/app.js" defer></script>
 </head>
 <body>
-  <header class="hero">
-    <a class="brand" href="/">
+  <header class="top">
+    <a class="brand" href="https://booknstyle.com/" aria-label="BookNStyle home">
       <img src="/img/mark.png" alt="">
       <span>BookNStyle</span>
+      <i></i>
     </a>
   </header>
 
   <main>
     <section class="card" aria-labelledby="page-title">
-      <div class="loading" id="loading"><div class="spinner" role="status" aria-label="Loading"></div></div>
+      <div class="loading" id="loading" role="status" aria-label="Loading">
+        <div class="ph ph--eyebrow"></div><div class="ph ph--title"></div>
+        <div class="ph ph--field"></div><div class="ph ph--field"></div><div class="ph ph--button"></div>
+      </div>
 
       <!-- Back from Stripe after the iPhone app sent the pro there (from=app). -->
       <div id="view-return" class="center stack" hidden>
         <p class="eyebrow">BookNStyle Pro</p>
         <h1 id="return-title" tabindex="-1"></h1>
         <p class="sub" id="return-text"></p>
-        <a class="btn" id="open-app" href="booknstyle://subscription">Open BookNStyle</a>
+        <a class="btn btn--gold" id="open-app" href="booknstyle://subscription">Open BookNStyle
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
         <p class="hint">Your plan shows in the app within a minute.</p>
       </div>
 
@@ -192,7 +195,7 @@
       <div id="view-signin" hidden>
         <div class="center">
           <p class="eyebrow">For pros</p>
-          <h1 id="signin-title" tabindex="-1">Your Pro plan</h1>
+          <h1 id="signin-title" tabindex="-1">Your <em>Pro plan</em></h1>
           <p class="sub">Sign in with your BookNStyle pro account.</p>
         </div>
         <div class="stack" style="margin-top:22px">
@@ -207,7 +210,7 @@
               <label for="pw-password">Password</label>
               <input id="pw-password" type="password" autocomplete="current-password" required>
             </div>
-            <button class="btn" type="submit" id="pw-submit">Sign in</button>
+            <button class="btn btn--gold btn--block" type="submit" id="pw-submit">Sign in</button>
           </form>
 
           <div class="divider" aria-hidden="true">or</div>
@@ -218,7 +221,7 @@
               <input id="otp-email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required>
               <p class="hint" style="margin-top:6px">For accounts made with Apple, Google or Facebook, too. Used Apple's “Hide My Email”? Enter that @privaterelay.appleid.com address.</p>
             </div>
-            <button class="btn btn-secondary" type="submit" id="otp-send">Email me a code</button>
+            <button class="btn btn--ghost btn--block" type="submit" id="otp-send">Email me a code</button>
           </form>
 
           <form id="code-form" class="stack" novalidate hidden>
@@ -226,7 +229,7 @@
               <label for="otp-code">Enter the code we emailed to <span id="code-email"></span></label>
               <input id="otp-code" class="code-input" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="10" required>
             </div>
-            <button class="btn" type="submit" id="code-submit">Sign in</button>
+            <button class="btn btn--gold btn--block" type="submit" id="code-submit">Sign in</button>
             <p class="center"><button class="link" type="button" id="code-back">Use a different email or send a new code</button></p>
           </form>
         </div>
@@ -255,7 +258,7 @@
               <div id="active-date-row"><dt id="active-date-label"></dt><dd id="active-date"></dd></div>
             </dl>
             <p class="hint" style="margin-top:12px" id="active-text"></p>
-            <button class="btn" type="button" id="manage" style="margin-top:18px">Manage billing</button>
+            <button class="btn btn--gold btn--block" type="button" id="manage" style="margin-top:18px">Manage billing</button>
             <p class="fine" style="margin-top:10px" id="manage-fine">Update your card, see invoices, or cancel on Stripe's secure page.</p>
           </div>
 
@@ -263,31 +266,32 @@
           <div id="plan-problem" hidden>
             <span class="status-badge warn">Payment problem</span>
             <p style="margin-top:12px" id="problem-text">Your last payment didn't go through. Update your card to keep taking new bookings.</p>
-            <button class="btn" type="button" id="fix-card" style="margin-top:18px">Update card</button>
+            <button class="btn btn--gold btn--block" type="button" id="fix-card" style="margin-top:18px">Update card</button>
           </div>
 
           <!-- No plan -->
           <form id="plan-choose" class="stack" novalidate hidden>
-            <p id="choose-pitch">No commission on your services. The $1.99 booking fee is paid by the client. A Pro plan lets clients find you in search and book you.</p>
+            <p id="choose-pitch">Zero commission on your services. Your own booking link, payouts to your bank and your rules, in one plan.</p>
             <fieldset>
               <legend>Choose a plan</legend>
               <div class="plans">
                 <label class="plan" id="plan-annual">
                   <input type="radio" name="plan" value="annual" checked>
                   <span class="plan-top"><span class="plan-name">Annual</span><span class="pill">Most popular · Best value</span></span>
-                  <span class="price" style="display:block">$216<small> /year</small></span>
-                  <span class="plan-note" style="display:block">Save 10% · $24/yr. $18/mo billed once a year, vs $20/mo monthly.</span>
+                  <span class="price" style="display:block">$216<small> /year + tax</small></span>
+                  <span class="plan-note" style="display:block">Save 10% · $24/yr. $18/mo billed once a year, vs $20/mo monthly, before tax.</span>
                 </label>
                 <label class="plan" id="plan-monthly">
                   <input type="radio" name="plan" value="monthly">
                   <span class="plan-top"><span class="plan-name">Monthly</span></span>
-                  <span class="price" style="display:block">$20<small> /month</small></span>
+                  <span class="price" style="display:block">$20<small> /month + tax</small></span>
                   <span class="plan-note" style="display:block">Billed every month on the same date. Cancel anytime.</span>
                 </label>
               </div>
             </fieldset>
-            <button class="btn" type="submit" id="start"></button>
+            <button class="btn btn--gold btn--block" type="submit" id="start"></button>
             <p class="fine" id="choose-fine"></p>
+            <p class="fine trust" id="choose-trust">Sold by BookNStyle LLC · Secure checkout by Stripe · Cancel anytime</p>
             <ul class="benefits" aria-label="What's included">
               <li>Unlimited services and bookings</li>
               <li>Payouts to your bank through Stripe</li>
@@ -318,6 +322,7 @@
     <footer>
       <a href="https://legal.booknstyle.com/terms/">Terms</a> ·
       <a href="https://legal.booknstyle.com/privacy/">Privacy</a> ·
+      <a href="https://legal.booknstyle.com/support/">Support</a> ·
       Payments by Stripe · © BookNStyle LLC
     </footer>
   </main>

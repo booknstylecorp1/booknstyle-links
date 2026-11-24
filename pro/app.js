@@ -9,6 +9,13 @@
 (function () {
   'use strict';
 
+  // Never run inside another site's frame (clickjacking). GitHub Pages
+  // can't send the frame-ancestors header, so the page refuses instead.
+  if (window.top !== window.self) {
+    document.documentElement.style.display = 'none';
+    return;
+  }
+
   var SUPABASE_URL = 'https://ebrxekhmlxlccuvcwiwb.supabase.co';
   // Supabase's PUBLIC publishable key, the same one inside the app and on
   // this site's invite pages. It can only do what the anon role may do.
@@ -21,8 +28,8 @@
   var ACTIVE = ['active', 'trialing'];
   var PROBLEM = ['past_due', 'unpaid', 'incomplete'];
   var PRICES = {
-    monthly: { label: '$20', per: '/month', then: ' Then $20 each month on that same date.' },
-    annual: { label: '$216', per: '/year', then: ' Then $216 once a year, on that same date each year. 10% less than paying monthly.' }
+    monthly: { label: '$20', per: '/month + tax', then: ' Then $20 plus tax each month on that same date.' },
+    annual: { label: '$216', per: '/year + tax', then: ' Then $216 plus tax once a year, on that same date each year. 10% less than paying monthly.' }
   };
 
   function $(id) { return document.getElementById(id); }
@@ -74,7 +81,10 @@
   var checkout = params.get('checkout');       // 'success' | 'cancel'
   var portalDone = params.get('portal') === 'done';
   var fromApp = params.get('from') === 'app';
-  if ((checkout || portalDone || fromApp) && history.replaceState) {
+  // A signed link from a billing email that couldn't be opened (pro-billing-link).
+  var linkProblem = params.get('link') === 'problem';
+  var LINK_PROBLEM_TEXT = 'That link couldn’t be opened. Email support@booknstyle.com and we’ll send your receipt or help with your plan.';
+  if ((checkout || portalDone || fromApp || linkProblem) && history.replaceState) {
     try { history.replaceState(null, '', '/pro/' + location.hash); } catch (e) { /* keep it */ }
   }
 
@@ -104,7 +114,11 @@
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true,
+      // Off: this page signs in only with a password or the 6-digit emailed
+      // code (the magic-link email carries {{ .Token }}, no link). With it
+      // on, a link carrying someone else's #access_token could sign a
+      // visitor into that other account.
+      detectSessionInUrl: false,
       flowType: 'implicit',
       storageKey: 'booknstyle-pro-billing'
     }
@@ -228,7 +242,8 @@
     $('choose-fine').textContent = (trial
       ? 'First month free: you won’t be charged until ' + longDate(trialEndDate()) + '.' + price.then
       : 'You’re charged today.' + price.then) +
-      ' Payment is processed by Stripe. Cancel anytime. You keep access until the end of your billing period.';
+      ' Sales tax is added where it applies and we are registered to collect, based on the address we have for your business, and shown separately on your receipt.' +
+      ' If you cancel, you keep access until the end of your billing period.';
   }
 
   function renderPlan(user) {
@@ -300,13 +315,15 @@
         show('plan-active');
         return;
       }
-      $('active-plan').textContent = plan.plan === 'annual' ? 'Annual · $216/year' : 'Monthly · $20/month';
+      // Website prices only: an iPhone plan has Apple's price, and Apple handles
+      // its tax. An Apple plan is handled further up and never reaches this.
+      $('active-plan').textContent = plan.plan === 'annual' ? 'Annual · $216/year + tax' : 'Monthly · $20/month + tax';
       var date = longDate(plan.current_period_end);
       if (plan.cancel_at_period_end) {
         $('active-date-label').textContent = 'Ends on';
         $('active-text').textContent = 'Your plan is set to end. You keep full access until then.';
       } else {
-        $('active-date-label').textContent = trialing ? 'First bill on' : 'Next bill on';
+        $('active-date-label').textContent = 'Next bill on';
         $('active-text').textContent = 'You’re all set. Clients can find you and book you.';
       }
       $('active-date').textContent = date || 'Not available';
@@ -359,9 +376,12 @@
         notice('account-notice', 'info', 'No changes made. You weren’t charged.');
       } else if (portalDone) {
         notice('account-notice', 'info', 'Back from billing. Changes can take a minute to show here.');
+      } else if (linkProblem) {
+        notice('account-notice', 'info', LINK_PROBLEM_TEXT);
       }
       checkout = null;
       portalDone = false;
+      linkProblem = false;
       view('view-account', 'account-title');
     }).catch(function () {
       $('error-title').textContent = 'We couldn’t load your plan';
@@ -392,7 +412,10 @@
           client.auth.signOut();
           return;
         }
-        notice('account-notice', 'error', status === 404
+        // 503: the server's PRO_WEB_TAX_READY switch isn't on yet.
+        notice('account-notice', 'error', status === 503
+          ? 'Paying on our website opens soon. Please check back shortly, or write to support@booknstyle.com and we will help.'
+          : status === 404
           ? 'We couldn’t find a plan to manage. Reload the page.'
           : 'We couldn’t open the payment page. Try again in a minute.');
         return;
@@ -443,7 +466,7 @@
         } else if (checkout === 'cancel') {
           showSignIn('No changes made. You weren’t charged.', 'info');
         } else {
-          showSignIn(event === 'SIGNED_OUT' ? 'You’re signed out.' : '');
+          showSignIn(linkProblem ? LINK_PROBLEM_TEXT + ' Sign in to see them.' : event === 'SIGNED_OUT' ? 'You’re signed out.' : '');
         }
         checkout = null;
         portalDone = false;
