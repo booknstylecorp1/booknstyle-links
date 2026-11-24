@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.3/dist/umd/supabase.js 'sha256-+Vpeba6TDgETRm2+GkrpSIh/u8R04f9eUI8DKCi9IXk='; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src https://ebrxekhmlxlccuvcwiwb.supabase.co; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Open BookNStyle</title>
 <meta name="description" content="Open the BookNStyle app.">
@@ -33,23 +35,95 @@
   The look: the website's (booknstyle.com), from /assets/editorial.css, the
   same as the booking page (index.html). Dark only.
 
-  Store badges: STORE_LINKS below, empty until the apps are live (the same
-  switch as index.html, join/ and get/; fill on launch day, RUNBOOK step 8).
-  Empty: faded badges under "Coming soon on iPhone and Android", not links
-  to store pages that aren't released yet, and on a computer the page
-  doesn't point to them.
+  Nov 3 2026 (owner): the "Choose a new password" button in the reset email
+  is this address with ?to=reset-password&token_hash=… (the recovery email,
+  supabase/auth-templates/). With the app installed it opens the app straight
+  on its reset screen (app/+native-intent.tsx). When it opens here instead,
+  this page offers "Open BookNStyle" (the app's own address, carrying the
+  token) and a form to set the new password right here, which works on a
+  computer too. Only then does it load the pinned supabase-js file (checked
+  by its hash, the same one /pro/ uses) and talk to BookNStyle's Supabase
+  with the public key. The token is used once, when the person saves, never
+  on page load, so an email scanner that opens links can't use it up.
+
+  Nov 22 2026 (reset link direct open, fix/reset-link-direct):
+  - The policy above lists the pinned supabase-js address in script-src and
+    BookNStyle's Supabase in connect-src. Without them (the Oct 30 policies
+    were written by hash only) the browser blocked both and the form could
+    only ever say "Couldn't reach BookNStyle".
+  - The token leaves the address bar as soon as it's read: history.replaceState
+    replaces the current history entry with ?to=reset-password, so Back and
+    Forward don't bring the token back and it isn't shown on screen. The
+    address as first opened (with the token) may still appear in the
+    browser's History list; the token works once and only for a short time.
+    Reloaded, or opened with no token, the page shows "Send a new link"
+    instead of a form that can't work.
+  - An expired or used link offers "Send a new link" here (the app's own
+    resetPasswordForEmail call, same redirect), as well as Open BookNStyle on
+    a phone.
+  - Supabase's words never reach the screen: the app's messages
+    (changePasswordMessage in app/(auth)/reset-password.tsx). A dropped
+    connection, too many tries (429) or a server error (5xx) keeps the form
+    and the unused token ("try again"); only other refusals call the link
+    expired.
+  - Tests: node --test scripts/reset-page.test.mjs (from web/links).
+
+  Oct 30 2026 (owner, Luxury Refinement R6, R21 step one):
+  - On a computer: "Open this on your phone" with a QR code of this page
+    (img/qr-open-app.svg, black on white so every camera reads it). The
+    phone that scans it opens the app.
+  - Store badges: STORE_LINKS below, empty until the apps are live (the
+    same two URLs as index.html, join/, get/ and web/site/main.js, written
+    by web/launch/apply.mjs from web/launch/launch.json, never by hand;
+    RUNBOOK step 8). Empty: faded badges under "Coming soon on iPhone and
+    Android", not links to store pages that aren't released yet.
 -->
 <link rel="stylesheet" href="/assets/editorial.css">
 <style>
-  /* Only what this page has: the Open BookNStyle button, then the stores. */
+  /* Only what this page has: the Open BookNStyle button (or the QR code on a computer), then the stores. */
   .card .btn { margin-top: 28px; }
   .note { color: var(--text-3); font-size: 14px; margin: 28px 0 0; }
   .note:not([hidden]) + .stores { margin-top: 14px; }
   /* Before launch: the website's faded "soon" badges, not links */
   .stores span { opacity: .55; filter: grayscale(.2); }
+  .qr { display: block; width: 184px; height: 184px; margin: 28px auto 0; padding: 12px; border-radius: 20px; background: #fff; box-shadow: 0 0 0 1px var(--line), 0 18px 40px -16px rgba(0, 0, 0, .7); }
+  .qr img { display: block; width: 100%; height: 100%; }
+  /* Choosing a new password, or asking for a new link (reset email): the /pro/ page's fields and messages */
+  .form-box { margin-top: 28px; text-align: left; }
+  .form-box form > * + * { margin-top: 14px; }
+  .form-box label { display: block; font-size: 13px; font-weight: 500; letter-spacing: .01em; color: var(--text-2); margin-bottom: 8px; }
+  .form-box input {
+    width: 100%; min-height: 52px; padding: 0 16px; border-radius: 14px;
+    font: 400 16px/1.4 var(--sans); color: var(--text);
+    background: var(--field); border: 1px solid var(--field-line);
+    -webkit-appearance: none; appearance: none;
+    transition: border-color .3s, box-shadow .3s, background-color .3s;
+  }
+  .form-box input:hover { border-color: rgba(223, 185, 144, .38); }
+  .form-box input:focus { outline: none; border-color: var(--champ-l); box-shadow: 0 0 0 4px rgba(200, 149, 106, .2); background-color: rgba(10, 11, 17, .78); }
+  .form-box input:-webkit-autofill, .form-box input:-webkit-autofill:hover {
+    -webkit-text-fill-color: var(--text); caret-color: var(--text);
+    -webkit-box-shadow: 0 0 0 1000px #121426 inset; box-shadow: 0 0 0 1000px #121426 inset;
+  }
+  .form-box .btn { margin-top: 20px; }
+  .form-box .btn[disabled] { opacity: .6; cursor: default; }
+  .divider {
+    display: flex; align-items: center; gap: 14px; margin: 0 0 24px;
+    color: var(--text-3); font-size: 12px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase;
+  }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .notice { border-radius: 14px; padding: 12px 14px; font-size: 15px; line-height: 1.5; border: 1px solid transparent; }
+  .notice.error { background: rgba(242, 167, 160, .08); border-color: rgba(242, 167, 160, .35); color: var(--danger); }
+  .form-box .hint { margin: 8px 0 0; color: var(--text-3); font-size: 13px; line-height: 1.5; }
+  .form-box .show-toggle { display: inline-block; background: none; border: 0; padding: 4px 0; font: inherit; font-size: 14px; font-weight: 500; color: var(--champ-l); cursor: pointer; }
+  .form-box .show-toggle:focus-visible { outline: 2px solid var(--champ-l); outline-offset: 3px; border-radius: 4px; }
+  #title:focus { outline: none; }
   /* Very narrow windows (a phone zoomed to 200% and up): slimmer margins,
      and the headline, eyebrow, button and badges shrink to fit, as on the
-     booking page. No change at 150% zoom or wider. */
+     booking page. No change at 150% zoom or wider. Live since Nov 12 2026
+     (booknstyle-links ae62c94, made in the published repo only); the QR
+     code, password boxes and divider lines are added here for this page's
+     computer and reset views. */
   @media (max-width: 239px) {
     .top { padding-left: 8px; padding-right: 8px; }
     main { padding-left: 12px; padding-right: 12px; }
@@ -63,6 +137,10 @@
     .stores img { max-width: 100%; }
     .stores .apple img { height: auto; width: min(156px, calc((100vw - 50px) * .784)); }
     .stores .google img { height: auto; width: min(199px, calc(100vw - 50px)); margin: max(-12px, calc((100vw - 50px) * -.06)) 0; }
+    .qr { width: 100%; max-width: 184px; height: auto; padding: 8px; border-radius: 14px; }
+    .qr img { height: auto; }
+    .form-box input { padding: 0 10px; }
+    .divider { gap: 8px; letter-spacing: .12em; text-align: center; }
   }
   @media (max-width: 159px) {
     .brand span { font-size: 11px; letter-spacing: .3em; margin-right: -.3em; }
@@ -73,12 +151,13 @@
     .card .btn { padding: 6px 8px; font-size: 14px; }
     .stores .apple img { width: min(156px, calc((100vw - 30px) * .784)); }
     .stores .google img { width: min(199px, calc(100vw - 30px)); margin: max(-12px, calc((100vw - 30px) * -.06)) 0; }
+    .divider::before, .divider::after { display: none; }
   }
 </style>
 </head>
 <body>
   <header class="top">
-    <a class="brand" href="/">
+    <a class="brand" href="https://booknstyle.com/" aria-label="BookNStyle home">
       <img src="/img/mark.png" alt="">
       <span>BookNStyle</span>
       <i></i>
@@ -92,6 +171,37 @@
       <p class="sub" id="sub">Your bookings, schedule and messages are in the BookNStyle app.</p>
       <a class="btn btn--gold" id="open" href="booknstyle://">Open BookNStyle
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <div class="qr" id="qr" hidden><img src="/img/qr-open-app.svg" alt="QR code that opens BookNStyle on your phone"></div>
+
+      <div class="form-box" id="reset" hidden>
+        <div class="divider" id="reset-or" aria-hidden="true">or set it here</div>
+        <form id="reset-form" novalidate>
+          <div>
+            <label for="reset-password">New password</label>
+            <input id="reset-password" type="password" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" minlength="8" required aria-describedby="reset-hint">
+            <p class="hint" id="reset-hint">At least 8 characters.</p>
+          </div>
+          <div>
+            <label for="reset-confirm">Confirm new password</label>
+            <input id="reset-confirm" type="password" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" minlength="8" required>
+          </div>
+          <button class="show-toggle" type="button" id="reset-show" aria-pressed="false">Show password</button>
+          <p class="notice error" id="reset-error" role="alert" hidden></p>
+          <button class="btn btn--gold btn--block" type="submit" id="reset-save">Save new password</button>
+        </form>
+      </div>
+
+      <div class="form-box" id="renew" hidden>
+        <div class="divider" id="renew-or" aria-hidden="true">or send a new link</div>
+        <form id="renew-form" novalidate>
+          <div>
+            <label for="renew-email">Your email</label>
+            <input id="renew-email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" required>
+          </div>
+          <p class="notice error" id="renew-error" role="alert" hidden></p>
+          <button class="btn btn--gold btn--block" type="submit" id="renew-send">Send a new link</button>
+        </form>
+      </div>
 
       <p class="note" id="note">Don't have the app on this phone?</p>
       <div class="stores" id="stores">
@@ -107,6 +217,7 @@
     <footer>
       <a href="https://legal.booknstyle.com/terms/">Terms</a> ·
       <a href="https://legal.booknstyle.com/privacy/">Privacy</a> ·
+      <a href="https://legal.booknstyle.com/support/">Support</a> ·
       © BookNStyle LLC
     </footer>
   </main>
@@ -115,29 +226,29 @@
 (function () {
   'use strict';
 
-  // STORE LINKS: empty until the apps are live; fill both on launch day
-  // (RUNBOOK step 8), the same two URLs as index.html, join/ and get/.
-  // Empty: faded badges under "Coming soon".
+  // STORE LINKS: written by web/launch/apply.mjs from web/launch/launch.json.
+  // Empty: faded badges under "Coming soon". The App Store link alone means
+  // the iPhone app is out and Android follows later.
   var STORE_LINKS = {
     appStore: 'https://apps.apple.com/app/id6813224710',
     googlePlay: 'https://play.google.com/store/apps/details?id=com.booknstyle.app'
   };
   var STORE_LABELS = { appStore: 'Download on the App Store', googlePlay: 'Get it on Google Play' };
+  function $(id) { return document.getElementById(id); }
   function storeLink(key) {
     var url = String(STORE_LINKS[key] || '').trim();
     return /^https:\/\//i.test(url) ? url : '';
   }
-  var live = !!(storeLink('appStore') && storeLink('googlePlay'));
-
   var ua = navigator.userAgent || '';
+  // Live for this visitor: their store is out (a computer counts the App Store).
+  var live = !!storeLink('appStore') && (!!storeLink('googlePlay') || !/android/i.test(ua));
   // iPadOS Safari says "Macintosh"; a touch screen tells it apart from a Mac.
   var isIPad = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
   var isPhone = /iPhone|iPod|iPad|Android/i.test(ua) || isIPad;
 
   // Put the store for this phone first, and make the badges links once live.
-  var stores = document.getElementById('stores');
-  if (/android/i.test(ua)) stores.insertBefore(document.getElementById('google'), document.getElementById('apple'));
-  var badges = stores.querySelectorAll('[data-store]');
+  if (/android/i.test(ua)) $('stores').insertBefore($('google'), $('apple'));
+  var badges = $('stores').querySelectorAll('[data-store]');
   for (var b = 0; b < badges.length; b++) {
     var badge = badges[b];
     var key = badge.getAttribute('data-store');
@@ -148,32 +259,288 @@
     a.id = badge.id;
     a.href = url;
     a.rel = 'noopener';
+    a.setAttribute('aria-label', STORE_LABELS[key]);
     var img = badge.querySelector('img');
-    if (img) { img.alt = STORE_LABELS[key]; a.appendChild(img); }
+    if (img) a.appendChild(img);
     badge.parentNode.replaceChild(a, badge);
   }
-  if (!live) document.getElementById('note').textContent = 'Coming soon on iPhone and Android';
+  if (!live) $('note').textContent = storeLink('appStore') ? 'On iPhone now. Coming soon to Android.' : 'Coming soon on iPhone and Android';
+
+  // The reset email's button: ?to=reset-password&token_hash=…
+  var query = new URLSearchParams(location.search);
+  if (query.get('to') === 'reset-password') {
+    showReset((query.get('token_hash') || '').trim(), isPhone, /android/i.test(ua));
+    return;
+  }
+
   if (!isPhone) {
-    // A computer can't open the phone app: say so, and (once live) show the stores.
-    document.getElementById('open').hidden = true;
-    // "phone app" in the gold italic, like "app" above (built as text).
-    var title = document.getElementById('title');
-    title.textContent = 'BookNStyle is a ';
+    // A computer can't open the phone app: a code to scan instead.
+    $('open').hidden = true;
+    // "phone" in the gold italic, like "app" above (built as text).
+    var title = $('title');
+    title.textContent = 'Open this on your ';
     var accent = document.createElement('em');
-    accent.textContent = 'phone app';
+    accent.textContent = 'phone';
     title.appendChild(accent);
-    document.getElementById('sub').textContent = live
-      ? 'Open this email on your phone to go straight to the app, or get it here:'
-      : 'Open this email on your phone to go straight to the app.';
-    // Before launch the note stays: "Coming soon on iPhone and Android".
-    if (live) document.getElementById('note').hidden = true;
+    $('sub').textContent = "Scan the code with your phone's camera to go straight to the BookNStyle app.";
+    $('qr').hidden = false;
+    if (live) $('note').textContent = "Don't have the app yet?";
     return;
   }
   if (/android/i.test(ua)) {
     // Chrome opens the app from an intent: link, and goes to Google Play
     // when it isn't installed. An empty path opens the app's home screen.
-    document.getElementById('open').href =
-      'intent://#Intent;scheme=booknstyle;package=com.booknstyle.app;end';
+    $('open').href = 'intent://#Intent;scheme=booknstyle;package=com.booknstyle.app;end';
+  }
+
+  function setTitle(before, accentWord) {
+    var title = $('title');
+    title.textContent = before;
+    var accent = document.createElement('em');
+    accent.textContent = accentWord;
+    title.appendChild(accent);
+  }
+
+  // The reset email's button (?to=reset-password&token_hash=…): set the new
+  // password here, or open the app with the same token. Also opened with
+  // ?to=reset-password and no token (this page reloaded after the token was
+  // cleared from the address bar): then only "Send a new link".
+  function showReset(token, onPhone, onAndroid) {
+    // The app's rule (app/(auth)/reset-password.tsx): at least 8 characters,
+    // spaces at either end ignored, typed the same twice.
+    var MIN_LENGTH = 8;
+    var SUPABASE_URL = 'https://ebrxekhmlxlccuvcwiwb.supabase.co';
+    // Supabase's PUBLIC publishable key, the same one in the app and /pro/app.js.
+    var SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_Vc4MPxSdXx1FmL3562bLUQ_A_KwQeVe';
+    var SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.3/dist/umd/supabase.js';
+    var SUPABASE_JS_HASH = 'sha384-wUhGjm8yom7j8IkWM5ZzIdOO/62dez3WNulthrcTYBqGaTi9lWhKKCnVtcxT2CEI';
+    // The app's own forgot-password call uses this address (forgot-password.tsx),
+    // already on Supabase's allowed list.
+    var RESET_REDIRECT = 'booknstyle://reset-password';
+    var APP_HOME = onAndroid ? 'intent://#Intent;scheme=booknstyle;package=com.booknstyle.app;end' : 'booknstyle://';
+
+    // The one-time token leaves the address bar at once: replaceState
+    // replaces the current history entry, so Back and Forward don't bring it
+    // back. The address as first opened may still appear in the browser's
+    // History list. The token stays in this page's memory until the person
+    // saves.
+    try { history.replaceState(null, '', location.pathname + '?to=reset-password'); } catch (e) {}
+
+    document.title = 'Choose a new password · BookNStyle';
+    $('qr').hidden = true;
+    $('note').hidden = true;
+    $('stores').hidden = true;
+    if (!onPhone) $('open').hidden = true;
+
+    // Moves a screen reader to the new heading when the view changes.
+    function announce() {
+      var title = $('title');
+      title.setAttribute('tabindex', '-1');
+      try { title.focus(); } catch (e) {}
+    }
+
+    // supabase-js, pinned by its hash, loads only for this view, and only
+    // once it is needed. Nothing here talks to Supabase until the person
+    // presses a button.
+    var clientPromise = null;
+    function client() {
+      if (clientPromise) return clientPromise;
+      clientPromise = new Promise(function (resolve, reject) {
+        if (window.supabase && window.supabase.createClient) return resolve();
+        var s = document.createElement('script');
+        s.src = SUPABASE_JS;
+        s.integrity = SUPABASE_JS_HASH;
+        s.crossOrigin = 'anonymous';
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      }).then(function () {
+        return window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+          auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+        });
+      });
+      // A failed load can be tried again with the next press.
+      clientPromise.catch(function () { clientPromise = null; });
+      return clientPromise;
+    }
+
+    // When saving fails for a reason that isn't the link: a dropped
+    // connection, too many tries (429) or a server error (5xx). Then the form
+    // stays and the token is still unused, so the person can try again. Any
+    // other refusal means the link is used or expired. Returns the message,
+    // or '' for a used or expired link. The status is read first: supabase-js
+    // reports a 502, 503, 504 or 52x as AuthRetryableFetchError with that
+    // status, and those are the server's trouble, not the person's
+    // connection. AuthRetryableFetchError with status 0 is a dropped
+    // connection.
+    function tryAgainMessage(error) {
+      if (!error) return '';
+      var status = Number(error.status) || 0;
+      if (status === 429) return 'Too many tries right now. Wait a few minutes, then try again.';
+      if (status >= 500) return "BookNStyle couldn't save it just now. Please try again in a moment.";
+      if (error.name === 'AuthRetryableFetchError' || !status) return "Couldn't reach BookNStyle. Check your connection and try again.";
+      return '';
+    }
+    // Never Supabase's own words (R20): the app's messages, by code, then text.
+    // Supabase's answer when the new password is the one the account already
+    // has. Here that is not a failure: the password typed works.
+    function isSamePassword(error) {
+      return String((error && error.code) || '') === 'same_password' || /different from the old/i.test(String((error && error.message) || ''));
+    }
+    function changePasswordMessage(error) {
+      var raw = String((error && error.message) || '');
+      var code = String((error && error.code) || '');
+      if (code === 'same_password' || /different from the old/i.test(raw)) return "Choose a password you haven't used on this account.";
+      if (code === 'weak_password' || /password/i.test(raw)) return 'Choose a stronger password and try again.';
+      if (/rate limit|too many/i.test(raw)) return 'Too many tries right now. Wait a few minutes, then try again.';
+      return 'Check your connection and try again.';
+    }
+    function resetErrorMessage(error) {
+      var m = String((error && error.message) || '').toLowerCase();
+      // "For security purposes, you can only request this after 42 seconds."
+      // The app's words (lib/authErrors.ts). The web billing page's sign-in
+      // code starts the same timer, so this doesn't say a link was sent.
+      if (m.indexOf('security purposes') !== -1) {
+        var n = Number((/after (\d+) seconds?/.exec(m) || [])[1]);
+        var wait = n > 0 ? Math.min(n, 3600) : 60;
+        return 'An email went to this address less than a minute ago. You can ask for a new link ' + (wait <= 1 ? 'in a second' : 'in ' + wait + ' seconds') + '.';
+      }
+      if (m.indexOf('rate limit') !== -1 || m.indexOf('too many') !== -1) return 'Too many tries right now. Wait a few minutes, then try again.';
+      if (m.indexOf('email') !== -1 && m.indexOf('valid') !== -1) return 'Check the email address and try again.';
+      return "We couldn't send the link. Check your connection and try again.";
+    }
+    function show(form, message) {
+      $(form + '-error').textContent = message;
+      $(form + '-error').hidden = false;
+    }
+
+    // Asking for a new link: an expired or used link, or no link at all.
+    function needNewLink(used) {
+      setTitle(used ? 'This link has ' : 'Get a new ', used ? 'expired' : 'link');
+      $('sub').textContent = used
+        ? 'Reset links work once and only for a short time, and only the newest one works. Send yourself a new one below, or tap "Forgot password?" on the BookNStyle log-in screen.'
+        : 'Open the link in your email again, or send yourself a new one below.';
+      $('reset').hidden = true;
+      $('renew').hidden = false;
+      $('renew-or').hidden = !onPhone;
+      if (onPhone) $('open').href = APP_HOME;
+      announce();
+    }
+    function done(alreadySet) {
+      setTitle('Password ', alreadySet ? 'saved' : 'changed');
+      $('sub').textContent = alreadySet
+        ? (onPhone
+          ? "That's already your password. Open BookNStyle and log in with it."
+          : "That's already your password. Open BookNStyle on your phone and log in with it.")
+        : (onPhone
+          ? 'Open BookNStyle and log in with your new password.'
+          : 'Open BookNStyle on your phone and log in with your new password.');
+      $('reset').hidden = true;
+      if (onPhone) $('open').href = APP_HOME;
+      announce();
+    }
+
+    $('renew-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var send = $('renew-send');
+      if (send.disabled) return;
+      $('renew-error').hidden = true;
+      var email = $('renew-email').value.trim();
+      if (!email) return show('renew', 'Enter the email you signed up with.');
+      send.disabled = true;
+      send.textContent = 'Sending';
+      client().then(function (c) {
+        return c.auth.resetPasswordForEmail(email, { redirectTo: RESET_REDIRECT }).then(function (r) {
+          if (r.error) return show('renew', resetErrorMessage(r.error));
+          setTitle('Check your ', 'email');
+          $('sub').textContent = 'We sent a new reset link to ' + email + '. Open it on your phone and BookNStyle opens on the right screen.';
+          $('renew').hidden = true;
+          announce();
+        });
+      }, function () {
+        show('renew', "Couldn't reach BookNStyle. Check your connection and try again.");
+      }).catch(function () {
+        show('renew', "We couldn't send the link. Check your connection and try again.");
+      }).then(function () {
+        send.disabled = false;
+        send.textContent = 'Send a new link';
+      });
+    });
+
+    if (!token) {
+      needNewLink(false);
+      return;
+    }
+
+    setTitle('Choose a new ', 'password');
+    $('sub').textContent = onPhone
+      ? 'Open BookNStyle to choose it in the app, or set it here.'
+      : 'Type your new password twice, then log in to BookNStyle on your phone with it.';
+    $('reset').hidden = false;
+    $('reset-or').hidden = !onPhone;
+    // The app's own reset address, carrying the same one-time token.
+    var appPath = 'reset-password?token_hash=' + encodeURIComponent(token) + '&type=recovery';
+    if (onPhone) {
+      $('open').href = onAndroid
+        ? 'intent://' + appPath + '#Intent;scheme=booknstyle;package=com.booknstyle.app;end'
+        : 'booknstyle://' + appPath;
+    }
+
+    // Show or hide both boxes, as on the app's screen, so a slip can be seen
+    // before it is saved.
+    $('reset-show').addEventListener('click', function () {
+      var showing = $('reset-password').type === 'text';
+      $('reset-password').type = showing ? 'password' : 'text';
+      $('reset-confirm').type = showing ? 'password' : 'text';
+      $('reset-show').textContent = showing ? 'Show password' : 'Hide password';
+      $('reset-show').setAttribute('aria-pressed', showing ? 'false' : 'true');
+    });
+
+    // Fetch supabase-js while the person types (it makes no calls by itself).
+    $('reset-form').addEventListener('focusin', function () { client().catch(function () {}); });
+
+    var signedIn = false;
+    var save = $('reset-save');
+    $('reset-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (save.disabled) return;
+      $('reset-error').hidden = true;
+      var password = $('reset-password').value.trim();
+      if (password.length < MIN_LENGTH) return show('reset', 'Use at least ' + MIN_LENGTH + ' characters.');
+      if (password !== $('reset-confirm').value.trim()) return show('reset', 'Type the same new password in both boxes.');
+      save.disabled = true;
+      save.textContent = 'Saving';
+      client().then(function (c) {
+        // The token is used here, once, when the person saves. After that a
+        // retry (for example a password Supabase turned down) only updates.
+        var signIn = signedIn
+          ? Promise.resolve({ error: null })
+          : c.auth.verifyOtp({ token_hash: token, type: 'recovery' });
+        return signIn.then(function (r) {
+          if (r.error) {
+            var again = tryAgainMessage(r.error);
+            if (again) return show('reset', again);
+            return needNewLink(true);
+          }
+          signedIn = true;
+          // The token is spent: the app button now just opens the app.
+          if (onPhone) $('open').href = APP_HOME;
+          return c.auth.updateUser({ password: password }).then(function (u) {
+            var alreadySet = !!u.error && isSamePassword(u.error);
+            if (u.error && !alreadySet) return show('reset', changePasswordMessage(u.error));
+            // Only this page's sign-in ends; a phone signed in stays signed in.
+            return c.auth.signOut({ scope: 'local' }).catch(function () {}).then(function () { done(alreadySet); });
+          });
+        });
+      }, function () {
+        show('reset', "Couldn't reach BookNStyle. Check your connection and try again.");
+      }).catch(function () {
+        show('reset', "Couldn't change your password. Please try again.");
+      }).then(function () {
+        save.disabled = false;
+        save.textContent = 'Save new password';
+      });
+    });
   }
 })();
 </script>
