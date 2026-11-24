@@ -360,18 +360,29 @@
   }
 
   // A pro on the waitlist holds this name (055): they haven't signed up in
-  // the app yet, so there's no card. Say so, and send their clients to the
-  // waitlist (after launch that page says "Get the app"). The name rides
-  // along as utm_campaign, so sign-ups show which pro's link brought them.
+  // the app yet, so there's no card. Say so. Before launch: send their
+  // clients to the waitlist (the name rides along as utm_campaign). After
+  // launch: offer the app instead.
   function showHeld(handle) {
-    document.title = '@' + handle + ' is coming to BookNStyle';
-    $('generic-eyebrow').textContent = 'Coming soon';
     // "@handle" in the champagne italic, the rest plain (built as text, never as HTML)
     var title = $('generic-title');
     title.textContent = '';
     var em = document.createElement('em');
     em.textContent = '@' + handle;
     title.appendChild(em);
+    if (LIVE) {
+      // After launch (Nov 24 2026): the pro hasn't finished signing up in the
+      // app yet. Offer the app, not the waitlist.
+      document.title = '@' + handle + ' is joining BookNStyle';
+      $('generic-eyebrow').textContent = 'Not booking yet';
+      title.appendChild(document.createTextNode(' is joining BookNStyle'));
+      $('generic-sub').textContent = 'Their booking link is saved for them. Get the app to book pros near you today.';
+      show('generic');
+      finish();
+      return;
+    }
+    document.title = '@' + handle + ' is coming to BookNStyle';
+    $('generic-eyebrow').textContent = 'Coming soon';
     title.appendChild(document.createTextNode(' is coming to BookNStyle'));
     $('generic-sub').textContent = "Their booking link is claimed. Join the list and we'll email you the day BookNStyle launches.";
     $('held-join').href = 'https://booknstyle.com/waitlist/?role=client&utm_source=pro_link&utm_campaign=' + encodeURIComponent(handle);
