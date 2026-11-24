@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.3/dist/umd/supabase.js 'sha256-+Vpeba6TDgETRm2+GkrpSIh/u8R04f9eUI8DKCi9IXk='; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src https://ebrxekhmlxlccuvcwiwb.supabase.co; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.3/dist/umd/supabase.js 'sha256-Jl0BZx3P/5HhpOKiOA+oQ5pFWfncLD6J2fNzNKrUAs0='; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src https://ebrxekhmlxlccuvcwiwb.supabase.co; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Open BookNStyle</title>
@@ -115,8 +115,23 @@
   .notice { border-radius: 14px; padding: 12px 14px; font-size: 15px; line-height: 1.5; border: 1px solid transparent; }
   .notice.error { background: rgba(242, 167, 160, .08); border-color: rgba(242, 167, 160, .35); color: var(--danger); }
   .form-box .hint { margin: 8px 0 0; color: var(--text-3); font-size: 13px; line-height: 1.5; }
-  .form-box .show-toggle { display: inline-block; background: none; border: 0; padding: 4px 0; font: inherit; font-size: 14px; font-weight: 500; color: var(--champ-l); cursor: pointer; }
-  .form-box .show-toggle:focus-visible { outline: 2px solid var(--champ-l); outline-offset: 3px; border-radius: 4px; }
+  /* The eye in a password box (owner, Nov 24 2026): tap it to see what was
+     typed, tap again to hide it. The app's eye: Ionicons eye-outline and
+     eye-off-outline, 20 points, the muted text color, a 44 point target. */
+  .form-box .pw-wrap { position: relative; }
+  .form-box .pw-wrap input { padding-right: 52px; }
+  .eye-toggle {
+    position: absolute; top: 0; bottom: 0; right: 4px; width: 44px;
+    display: flex; align-items: center; justify-content: center;
+    -webkit-appearance: none; appearance: none; background: none; border: 0; padding: 0; border-radius: 10px;
+    color: var(--text-3); cursor: pointer; transition: color .2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .eye-toggle:hover { color: var(--text-2); }
+  .eye-toggle:focus-visible { outline: 2px solid var(--champ-l); outline-offset: -4px; }
+  .eye-toggle svg { display: block; width: 20px; height: 20px; }
+  .eye-toggle .eye-off, .eye-toggle[data-showing="true"] .eye-on { display: none; }
+  .eye-toggle[data-showing="true"] .eye-off { display: block; }
   #title:focus { outline: none; }
   /* Very narrow windows (a phone zoomed to 200% and up): slimmer margins,
      and the headline, eyebrow, button and badges shrink to fit, as on the
@@ -140,6 +155,8 @@
     .qr { width: 100%; max-width: 184px; height: auto; padding: 8px; border-radius: 14px; }
     .qr img { height: auto; }
     .form-box input { padding: 0 10px; }
+    .form-box .pw-wrap input { padding-right: 46px; }
+    .eye-toggle { right: 1px; }
     .divider { gap: 8px; letter-spacing: .12em; text-align: center; }
   }
   @media (max-width: 159px) {
@@ -178,14 +195,19 @@
         <form id="reset-form" novalidate>
           <div>
             <label for="reset-password">New password</label>
-            <input id="reset-password" type="password" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" minlength="8" required aria-describedby="reset-hint">
+            <div class="pw-wrap">
+              <input id="reset-password" type="password" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" minlength="8" required aria-describedby="reset-hint">
+              <button class="eye-toggle" type="button" id="reset-show" aria-label="Show password" data-showing="false"><svg class="eye-on" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><path d="M255.66 112c-77.94 0-157.89 45.11-220.83 135.33a16 16 0 00-.27 17.77C82.92 340.8 161.8 400 255.66 400c92.84 0 173.34-59.38 221.79-135.25a16.14 16.14 0 000-17.47C428.89 172.28 347.8 112 255.66 112z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/><circle cx="256" cy="256" r="80" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="32"/></svg><svg class="eye-off" viewBox="0 0 512 512" aria-hidden="true" focusable="false" fill="currentColor"><path d="M432 448a15.92 15.92 0 01-11.31-4.69l-352-352a16 16 0 0122.62-22.62l352 352A16 16 0 01432 448zM255.66 384c-41.49 0-81.5-12.28-118.92-36.5-34.07-22-64.74-53.51-88.7-91v-.08c19.94-28.57 41.78-52.73 65.24-72.21a2 2 0 00.14-2.94L93.5 161.38a2 2 0 00-2.71-.12c-24.92 21-48.05 46.76-69.08 76.92a31.92 31.92 0 00-.64 35.54c26.41 41.33 60.4 76.14 98.28 100.65C162 402 207.9 416 255.66 416a239.13 239.13 0 0075.8-12.58 2 2 0 00.77-3.31l-21.58-21.58a4 4 0 00-3.83-1 204.8 204.8 0 01-51.16 6.47zM490.84 238.6c-26.46-40.92-60.79-75.68-99.27-100.53C349 110.55 302 96 255.66 96a227.34 227.34 0 00-74.89 12.83 2 2 0 00-.75 3.31l21.55 21.55a4 4 0 003.88 1 192.82 192.82 0 0150.21-6.69c40.69 0 80.58 12.43 118.55 37 34.71 22.4 65.74 53.88 89.76 91a.13.13 0 010 .16 310.72 310.72 0 01-64.12 72.73 2 2 0 00-.15 2.95l19.9 19.89a2 2 0 002.7.13 343.49 343.49 0 0068.64-78.48 32.2 32.2 0 00-.1-34.78z"/><path d="M256 160a95.88 95.88 0 00-21.37 2.4 2 2 0 00-1 3.38l112.59 112.56a2 2 0 003.38-1A96 96 0 00256 160zM165.78 233.66a2 2 0 00-3.38 1 96 96 0 00115 115 2 2 0 001-3.38z"/></svg></button>
+            </div>
             <p class="hint" id="reset-hint">At least 8 characters.</p>
           </div>
           <div>
             <label for="reset-confirm">Confirm new password</label>
-            <input id="reset-confirm" type="password" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" minlength="8" required>
+            <div class="pw-wrap">
+              <input id="reset-confirm" type="password" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" minlength="8" required>
+              <button class="eye-toggle" type="button" id="reset-show-confirm" aria-label="Show password" data-showing="false"><svg class="eye-on" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><path d="M255.66 112c-77.94 0-157.89 45.11-220.83 135.33a16 16 0 00-.27 17.77C82.92 340.8 161.8 400 255.66 400c92.84 0 173.34-59.38 221.79-135.25a16.14 16.14 0 000-17.47C428.89 172.28 347.8 112 255.66 112z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/><circle cx="256" cy="256" r="80" fill="none" stroke="currentColor" stroke-miterlimit="10" stroke-width="32"/></svg><svg class="eye-off" viewBox="0 0 512 512" aria-hidden="true" focusable="false" fill="currentColor"><path d="M432 448a15.92 15.92 0 01-11.31-4.69l-352-352a16 16 0 0122.62-22.62l352 352A16 16 0 01432 448zM255.66 384c-41.49 0-81.5-12.28-118.92-36.5-34.07-22-64.74-53.51-88.7-91v-.08c19.94-28.57 41.78-52.73 65.24-72.21a2 2 0 00.14-2.94L93.5 161.38a2 2 0 00-2.71-.12c-24.92 21-48.05 46.76-69.08 76.92a31.92 31.92 0 00-.64 35.54c26.41 41.33 60.4 76.14 98.28 100.65C162 402 207.9 416 255.66 416a239.13 239.13 0 0075.8-12.58 2 2 0 00.77-3.31l-21.58-21.58a4 4 0 00-3.83-1 204.8 204.8 0 01-51.16 6.47zM490.84 238.6c-26.46-40.92-60.79-75.68-99.27-100.53C349 110.55 302 96 255.66 96a227.34 227.34 0 00-74.89 12.83 2 2 0 00-.75 3.31l21.55 21.55a4 4 0 003.88 1 192.82 192.82 0 0150.21-6.69c40.69 0 80.58 12.43 118.55 37 34.71 22.4 65.74 53.88 89.76 91a.13.13 0 010 .16 310.72 310.72 0 01-64.12 72.73 2 2 0 00-.15 2.95l19.9 19.89a2 2 0 002.7.13 343.49 343.49 0 0068.64-78.48 32.2 32.2 0 00-.1-34.78z"/><path d="M256 160a95.88 95.88 0 00-21.37 2.4 2 2 0 00-1 3.38l112.59 112.56a2 2 0 003.38-1A96 96 0 00256 160zM165.78 233.66a2 2 0 00-3.38 1 96 96 0 00115 115 2 2 0 001-3.38z"/></svg></button>
+            </div>
           </div>
-          <button class="show-toggle" type="button" id="reset-show" aria-pressed="false">Show password</button>
           <p class="notice error" id="reset-error" role="alert" hidden></p>
           <button class="btn btn--gold btn--block" type="submit" id="reset-save">Save new password</button>
         </form>
@@ -488,13 +510,19 @@
 
     // Show or hide both boxes, as on the app's screen, so a slip can be seen
     // before it is saved.
-    $('reset-show').addEventListener('click', function () {
-      var showing = $('reset-password').type === 'text';
-      $('reset-password').type = showing ? 'password' : 'text';
-      $('reset-confirm').type = showing ? 'password' : 'text';
-      $('reset-show').textContent = showing ? 'Show password' : 'Hide password';
-      $('reset-show').setAttribute('aria-pressed', showing ? 'false' : 'true');
-    });
+    // The eye in each box (as in the app): either one shows or hides both
+    // boxes together, and its label says what a tap will do.
+    function toggleShown() {
+      var show = $('reset-password').type !== 'text';
+      $('reset-password').type = show ? 'text' : 'password';
+      $('reset-confirm').type = show ? 'text' : 'password';
+      ['reset-show', 'reset-show-confirm'].forEach(function (id) {
+        $(id).setAttribute('data-showing', show ? 'true' : 'false');
+        $(id).setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      });
+    }
+    $('reset-show').addEventListener('click', toggleShown);
+    $('reset-show-confirm').addEventListener('click', toggleShown);
 
     // Fetch supabase-js while the person types (it makes no calls by itself).
     $('reset-form').addEventListener('focusin', function () { client().catch(function () {}); });

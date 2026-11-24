@@ -136,6 +136,23 @@
     view('view-signin', 'signin-title');
   }
 
+  // The eye in the password box (as in the app): shows or hides what was
+  // typed, and its label says what a tap will do.
+  // Guarded: an older cached copy of this page has no eye button, and the rest of
+  // this script must still run.
+  function showPassword(show) {
+    var box = $('pw-password'), eye = $('pw-show');
+    if (!box || !eye) return;
+    box.type = show ? 'text' : 'password';
+    eye.setAttribute('data-showing', show ? 'true' : 'false');
+    eye.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  }
+  if ($('pw-show')) {
+    $('pw-show').addEventListener('click', function () {
+      showPassword($('pw-password').type !== 'text');
+    });
+  }
+
   $('password-form').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var email = $('pw-email').value.trim();
@@ -155,6 +172,7 @@
         return;
       }
       $('pw-password').value = '';
+      showPassword(false);
       // onAuthStateChange shows the account.
     });
   });
